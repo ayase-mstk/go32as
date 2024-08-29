@@ -1,0 +1,58 @@
+; RISC-V 32I アセンブリのABNF
+
+; プログラム全体の定義
+assembly-source          = *(line)
+
+; 行の定義
+line            = [label] [instruction / directive] [comment] CRLF
+
+; ラベルの定義
+label           = identifier ":"
+identifier      = 1*(ALPHA / DIGIT) ; Identifier starts with a letter, can contain digits
+
+; ディレクティブの定義
+directive       = (".text" / ".rela.text" / ".data" / ".bss" / ".riscv.attributes" / ".sysmtab" / ".strtab" / ".shstrtab") OWS
+
+; 命令の定義
+instruction     = rtype-instr / itype-instr / stype-instr / btype-instr / utype-instr / jtype-instr
+
+rtype-instr     = OWS rtype-op reg "," reg "," reg
+itype-instr     = OWS itype-op reg "," reg "," imm
+stype-instr     = OWS stype-op reg "," imm "(" reg ")"
+btype-instr     = OWS btype-op reg "," reg "," label
+utype-instr     = OWS utype-op reg "," imm
+jtype-instr     = OWS jtype-op reg "," offset
+
+rtype-op        = "add" / "sub" / "and" / "or"/ "xor" / "sll" / "srl" / "sra" / "slt" / "sltu"
+itype-op        = "addi" / "xori" / "ori" / "andi" / "slli" /"srli" / "srai" / "slti" / "sltiu" / "lb" / "lh" / "lw" / "lbu" / "lbu" / "lhu" / "jalr" / "ecall" / "ebreak"
+stype-op        = "sb" / "sh" / "sw"
+btype-op        = "beq" / "bne" / "blt" / "bge" / "bltu" / "bgeu"
+utype-op        = "lui" / "auipc"
+jtype-op        = "jal"
+
+; Registers
+reg             = "x0" / "x1" / "x2" / "x3" / "x4" / "x5" / "x6" / "x7" /
+                  "x8" / "x9" / "x10" / "x11" / "x12" / "x13" / "x14" / "x15" /
+                  "x16" / "x17" / "x18" / "x19" / "x20" / "x21" / "x22" / "x23" /
+                  "x24" / "x25" / "x26" / "x27" / "x28" / "x29" / "x30" / "x31" /
+                  "zero" / "ra" / "sp" / "gp" / "tp" / "t0" / "t1" / "t2" /
+                  "fp" / "s0" / "s1" / "a0" / "a1" / "a2" / "a3" / "a4" / "a5" /
+                  "a6" / "a7" / "s2" / "s3" / "s4" / "s5" / "s6" / "s7" / "s8" /
+                  "s9" / "s10" / "s11" / "t3" / "t4" / "t5" / "t6"
+imm             = ["-"] 1*DIGIT / ("0x" 1*HEXDIG)  ; Immediate values can be negative or positive
+offset          = imm
+
+; コメントの定義
+comment         = "#" *(VCHAR / OWS) ; コメントは#で始まる
+
+; 定数の定義
+ALPHA           = %x41-5A / %x61-7A   ; A-Z / a-z
+DIGIT           = %x30-39             ; 0-9
+HEXDIG          = DIGIT / "A" / "B" / "C" / "D" / "E" / "F"
+VCHAR           = %x21-7E             ; Visible characters
+WS              = SP / HTAB
+OWS             = *(WS)               ; Optional ws
+SP              = %x20                ; Newline
+HTAB            = %x09                ; Horizontal tab
+CR              = %x0D                ; carriage return
+LF              = %x0A                ; line feed

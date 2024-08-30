@@ -43,7 +43,7 @@ imm             = ["-"] 1*DIGIT / ("0x" 1*HEXDIG)  ; Immediate values can be neg
 offset          = imm
 
 ; コメントの定義
-comment         = "#" *(VCHAR / OWS) ; コメントは#で始まる
+comment         = ("#" *(VCHAR / OWS)) / ('/*' *(VCHAR / OWS / CR / LF) '*/') ; コメントは#で始まる
 
 ; 定数の定義
 ALPHA           = %x41-5A / %x61-7A   ; A-Z / a-z
@@ -52,7 +52,7 @@ HEXDIG          = DIGIT / "A" / "B" / "C" / "D" / "E" / "F"
 VCHAR           = %x21-7E             ; Visible characters
 WS              = SP / HTAB
 OWS             = *(WS)               ; Optional ws
-SP              = %x20                ; Newline
+SP              = %x20                ; Space
 HTAB            = %x09                ; Horizontal tab
 CR              = %x0D                ; carriage return
 LF              = %x0A                ; line feed

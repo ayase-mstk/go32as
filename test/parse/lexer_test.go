@@ -5,6 +5,7 @@ package lexer
 import (
   "os"
 	"testing"
+  "fmt"
   "github.com/ayase-mstk/go32as/src/parse"
 )
 
@@ -239,4 +240,61 @@ func TestLexer7(t *testing.T) {
 	}
 
   expectSame(t, tokens, tests)
+}
+
+/*
+==========================================
+=============  Error Test  ===============
+==========================================
+*/
+
+const(
+  DuplicateLabel = "Multiple labels found on the same line. Only one label is allowed per line."
+  UnrecognizedChar = "junk at end of line, first unrecognized character is `%c'"
+)
+
+func expectErrorMessage(t *testing.T, actual, expect string) {
+  if actual != expect {
+    t.Fatalf("test - lexer error msg is different from expected.\nactual: %q\nexpected: %q", actual, expect)
+  }
+}
+
+func TestLexerError1(t *testing.T) {
+	input := []rune("main: .L0:")
+	_, err := parse.LexerLine(input, 1)
+  if err == nil {
+    t.Fatalf("test - lexer didnot fail: expect fail")
+  }
+
+  expectErrorMessage(t, err.Error(), DuplicateLabel)
+}
+
+func TestLexerError2(t *testing.T) {
+	input := []rune("main: lw x6, 0(x7) .section")
+	_, err := parse.LexerLine(input, 1)
+  if err == nil {
+    t.Fatalf("test - lexer didnot fail: expect fail")
+  }
+
+  expectErrorMessage(t, err.Error(), fmt.Sprintf(UnrecognizedChar, '.'))
+}
+
+func TestLexerError3(t *testing.T) {
+	input := []rune("lw x6, 0(x7) main:")
+	_, err := parse.LexerLine(input, 1)
+  if err == nil {
+    t.Fatalf("test - lexer didnot fail: expect fail")
+  }
+
+  expectErrorMessage(t, err.Error(), fmt.Sprintf(UnrecognizedChar, 'm'))
+}
+
+func TestLexerError4(t *testing.T) {
+	input := []rune(".text .L0:")
+	_, err := parse.LexerLine(input, 1)
+  if err == nil {
+    t.Fatalf("test - lexer didnot fail: expect fail")
+  }
+
+  expectErrorMessage(t, err.Error(), fmt.Sprintf(UnrecognizedChar, '.'))
 }

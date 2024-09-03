@@ -4,6 +4,8 @@ import (
   "os"
   "bufio"
   "strings"
+  "fmt"
+  "errors"
   "github.com/ayase-mstk/go32as/src/utils"
 )
 
@@ -75,11 +77,14 @@ func whichToken(val string) TokenType {
   }
 }
 
-func LexerLine(input []rune) []IToken {
+func LexerLine(input []rune, row int) ([]IToken, error) {
   var tokens []IToken
   i         := 0
   start     := 0
   isLiteral := false
+  hasLabel  := false
+  hasDir    := false
+  hasOpcode := false
 
   for ; i < len(input); i++ {
     // literal
@@ -94,7 +99,32 @@ func LexerLine(input []rune) []IToken {
     if isDelim(input[i]) {
       if i - start > 1 {
         val := string(input[start:i])
-        tokens = append(tokens, newToken(whichToken(val), val))
+        newTk := newToken(whichToken(val), val, row)
+        tokens = append(tokens, newTk)
+
+        // syntax error handle
+        switch newTk.Type() {
+        case LABEL:
+          if hasLabel || hasDir || hasOpcode {
+            return nil, errors.New("Multiple labels found on the same line. Only one label is allowed per line.")
+          }
+          hasLabel = true
+          break;
+        case DIRECTIVE:
+          if hasDir || hasOpcode {
+            return nil, fmt.Errorf("junk at end of line, first unrecognized character is `%c'", newTk.Val()[0])
+          }
+          hasDir = true
+          break;
+        case OPECODE:
+          if hasDir || hasOpcode {
+            return nil, fmt.Errorf("junk at end of line, first unrecognized character is `%c'", newTk.Val()[0])
+          }
+          hasOpcode = true
+          break;
+        case UNKNOWN:
+          break;
+        }
       }
       // commentはそれ以降読み飛ばす
       if '#' == input[i] {
@@ -106,11 +136,11 @@ func LexerLine(input []rune) []IToken {
   }
   if len(input) - start > 1 {
     val := string(input[start:])
-    tokens = append(tokens, newToken(whichToken(val), val))
+    tokens = append(tokens, newToken(whichToken(val), val, row))
   }
 
   // printTokens(tokens)
-  return tokens
+  return tokens, nil
 }
 
 func LexerFile(filename string) ([]IToken, error) {
@@ -125,11 +155,17 @@ func LexerFile(filename string) ([]IToken, error) {
 
   // バッファードリーダーを作成します。
   scanner := bufio.NewScanner(file)
+  row := 1
 
   // ファイルの各行を読み込みます。
   for scanner.Scan() {
     line := scanner.Text() // 現在の行を取得します。
-    tokens = append(tokens, LexerLine([]rune(line))...)     // 行を処理します。
+    newTokens, err := LexerLine([]rune(line), row)
+    if err != nil {
+      return nil, fmt.Errorf("%s:%d: Error: %s\n", filename, row, err.Error())
+    }
+    tokens = append(tokens, newTokens...)     // 行を処理します。
+    row++
   }
 
   // 読み込み中にエラーが発生した場合はエラーを返します。

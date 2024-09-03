@@ -77,54 +77,83 @@ func whichToken(val string) TokenType {
   }
 }
 
+type syntax struct {
+  isLiteral bool
+  hasLabel  bool
+  hasDir    bool
+  hasOpcode bool
+}
+
+func isValidSyntax(tk Token, st *syntax) error {
+  // syntax error handle
+  switch tk.Type() {
+  case LABEL:
+    if st.hasLabel {
+      return errors.New("Multiple labels found on the same line. Only one label is allowed per line.")
+    }
+    if st.hasDir || st.hasOpcode {
+      return fmt.Errorf("junk at end of line, first unrecognized character is `%c'", tk.Val()[0])
+    }
+    st.hasLabel = true
+    break;
+
+  case DIRECTIVE:
+    if st.hasDir || st.hasOpcode {
+      return fmt.Errorf("junk at end of line, first unrecognized character is `%c'", tk.Val()[0])
+    }
+    st.hasDir = true
+    break;
+
+  case OPECODE:
+    if st.hasDir || st.hasOpcode {
+      return fmt.Errorf("junk at end of line, first unrecognized character is `%c'", tk.Val()[0])
+    }
+    st.hasOpcode = true
+    break;
+
+  default:
+    break;
+  }
+  return nil
+}
+
+func addNewToken(start, end, row int, input []rune, tokens *[]IToken, st *syntax) error {
+  if end - start > 1 {
+    val := string(input[start:end])
+    newTK := newToken(whichToken(val), val, row)
+    *tokens = append(*tokens, newTK)
+    err := isValidSyntax(newTK, st)
+    if err != nil {
+      return err
+    }
+  }
+  return nil
+}
+
 func LexerLine(input []rune, row int) ([]IToken, error) {
   var tokens []IToken
-  i         := 0
-  start     := 0
-  isLiteral := false
-  hasLabel  := false
-  hasDir    := false
-  hasOpcode := false
+  start      := 0
+  st := syntax{
+    isLiteral: false,
+    hasLabel:  false,
+    hasDir:    false,
+    hasOpcode: false,
+  }
 
-  for ; i < len(input); i++ {
+  for i := 0; i < len(input); i++ {
     // literal
-    if '"' == input[i] && !isLiteral {
-      isLiteral = true
-    } else if '"' == input[i] && isLiteral {
-      isLiteral = false
-    } else if isLiteral {
+    if '"' == input[i] && !st.isLiteral {
+      st.isLiteral = true
+    } else if '"' == input[i] && st.isLiteral {
+      st.isLiteral = false
+    } else if st.isLiteral {
       continue
     }
 
     if isDelim(input[i]) {
-      if i - start > 1 {
-        val := string(input[start:i])
-        newTk := newToken(whichToken(val), val, row)
-        tokens = append(tokens, newTk)
-
-        // syntax error handle
-        switch newTk.Type() {
-        case LABEL:
-          if hasLabel || hasDir || hasOpcode {
-            return nil, errors.New("Multiple labels found on the same line. Only one label is allowed per line.")
-          }
-          hasLabel = true
-          break;
-        case DIRECTIVE:
-          if hasDir || hasOpcode {
-            return nil, fmt.Errorf("junk at end of line, first unrecognized character is `%c'", newTk.Val()[0])
-          }
-          hasDir = true
-          break;
-        case OPECODE:
-          if hasDir || hasOpcode {
-            return nil, fmt.Errorf("junk at end of line, first unrecognized character is `%c'", newTk.Val()[0])
-          }
-          hasOpcode = true
-          break;
-        case UNKNOWN:
-          break;
-        }
+      err := addNewToken(start, i, row, input, &tokens, &st)
+      if err != nil {
+        return nil, err
       }
       // commentはそれ以降読み飛ばす
       if '#' == input[i] {
@@ -134,11 +163,10 @@ func LexerLine(input []rune, row int) ([]IToken, error) {
       start = i+1
     }
   }
-  if len(input) - start > 1 {
-    val := string(input[start:])
-    tokens = append(tokens, newToken(whichToken(val), val, row))
+  err := addNewToken(start, len(input), row, input, &tokens, &st)
+  if err != nil {
+    return nil, err
   }
-
   // printTokens(tokens)
   return tokens, nil
 }

@@ -44,14 +44,10 @@ func newToken(ttype TokenType, val string, row int) Token {
   return Token{typ: ttype, val: val, row: row}
 }
 
-func printTokens(tokens []Token) {
+func printTokens(tokens []IToken) {
   for _, t := range tokens {
-    t.printFeature()
+    fmt.Println("val=", t.Val())
+    fmt.Println("type=", t.Type())
+    fmt.Println("row=", t.Row())
   }
-}
-
-func (t *Token) printFeature() {
-  fmt.Println("val=", t.Val())
-  fmt.Println("type=", t.Type())
-  fmt.Println("row=", t.Row())
 }

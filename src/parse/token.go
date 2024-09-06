@@ -1,30 +1,30 @@
 package parse
 
 import (
-  "fmt"
-  "strings"
-  "github.com/ayase-mstk/go32as/src/utils"
+	"fmt"
+	"github.com/ayase-mstk/go32as/src/utils"
+	"strings"
 )
 
 type TokenType int
 
 const (
-  TLabel TokenType = iota
-  TDirective
-  TOpecode
-  TUnknown
+	TLabel TokenType = iota
+	TDirective
+	TOpecode
+	TUnknown
 )
 
 type Token struct {
-  typ    TokenType
-  val    string
-  //row    int
+	typ TokenType
+	val string
+	//row    int
 }
 
 func newToken(val string) Token {
-  tk := Token{val: val}
-  tk.setType()
-  return tk
+	tk := Token{val: val}
+	tk.setType()
+	return tk
 }
 
 func (t Token) Type() TokenType { return t.typ }
@@ -34,58 +34,58 @@ func (t Token) Val() string { return t.val }
 //func (t Token) Row() int { return t.row }
 
 func (t Token) isLabel() bool {
-  literal := t.Val()
-  // ラベルかどうか
-  if !strings.HasSuffix(literal, ":") {
-    return false
-  }
-  literal = literal[:len(literal)-1]
-  // すべて数値
-  if utils.IsNumericStr(literal[:len(literal)-1]) {
-    return true;
-  }
-  // 接頭辞はalphabetかアンダーバー
-  if utils.IsAlpha(literal[0]) ||  literal[0] == '_'  || literal[0] == '.'{
-    literal = literal[1:]
-    for i := 0; i < len(literal); i++ {
-      if !(utils.IsAlpha(literal[i]) || utils.IsNumeric(literal[i]) || literal[i] == '_' || literal[i] == '.') {
-        return false
-      }
-    }
-  } else {
-    return false
-  }
-  return true
+	literal := t.Val()
+	// ラベルかどうか
+	if !strings.HasSuffix(literal, ":") {
+		return false
+	}
+	literal = literal[:len(literal)-1]
+	// すべて数値
+	if utils.IsNumericStr(literal[:len(literal)-1]) {
+		return true
+	}
+	// 接頭辞はalphabetかアンダーバー
+	if utils.IsAlpha(literal[0]) || literal[0] == '_' || literal[0] == '.' {
+		literal = literal[1:]
+		for i := 0; i < len(literal); i++ {
+			if !(utils.IsAlpha(literal[i]) || utils.IsNumeric(literal[i]) || literal[i] == '_' || literal[i] == '.') {
+				return false
+			}
+		}
+	} else {
+		return false
+	}
+	return true
 }
 
 func (t Token) isDirective() bool {
-  _, exists := directiveSet[t.Val()]
-  return exists
+	_, exists := directiveSet[t.Val()]
+	return exists
 }
 
 func (t Token) isOpecode() bool {
-  _, exists := OpecodeMap[t.Val()]
-  return exists
+	_, exists := OpecodeMap[t.Val()]
+	return exists
 }
 
 func (t *Token) setType() {
-  if t.isLabel() {
-    t.typ = TLabel
-  } else if t.isDirective() {
-    t.typ = TDirective
-  } else if t.isOpecode() {
-    t.typ = TOpecode
-  } else {
-    t.typ = TUnknown
-  }
+	if t.isLabel() {
+		t.typ = TLabel
+	} else if t.isDirective() {
+		t.typ = TDirective
+	} else if t.isOpecode() {
+		t.typ = TOpecode
+	} else {
+		t.typ = TUnknown
+	}
 }
 
 func printTokens(tokens []Token) {
-  for _, t := range tokens {
-    printToken(t)
-  }
+	for _, t := range tokens {
+		printToken(t)
+	}
 }
 func printToken(tk Token) {
-  fmt.Printf("val=[%s]", tk.Val())
-  fmt.Println("type=", tk.Type())
+	fmt.Printf("val=[%s]", tk.Val())
+	fmt.Println("type=", tk.Type())
 }

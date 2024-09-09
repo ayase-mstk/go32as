@@ -52,6 +52,7 @@ type Stmt struct {
 	typ         StmtType
 	op          *Operation
 	dir         *Directive
+  section     string
 	labelSymbol string
 	row         int
 	src         []rune
@@ -61,6 +62,7 @@ type Stmt struct {
 func (s *Stmt) Type() StmtType  { return s.typ }
 func (s *Stmt) Op() *Operation  { return s.op }
 func (s *Stmt) Dir() *Directive { return s.dir }
+func (s *Stmt) Section() string { return s.section }
 func (s *Stmt) LSymbol() string { return s.labelSymbol }
 func (s *Stmt) Row() int        { return s.row }
 
@@ -109,6 +111,18 @@ func (s *Stmt) getToken() Token {
 	val := string(s.src[start:s.idx])
 	newTK := newToken(val)
 	return newTK
+}
+
+func changeSection(curSection *string, s Stmt) {
+  if s.Dir() == nil {
+    return
+  }
+
+  if s.Dir().Name() == Section {
+    *curSection = s.dir.args[0]
+  } else if s.Dir().isSection() {
+    *curSection = s.dir.name
+  }
 }
 
 func ParseLine(input []rune, row int) (Stmt, error) {
@@ -161,6 +175,7 @@ func ParseLine(input []rune, row int) (Stmt, error) {
 
 func ParseFile(filename string) ([]Stmt, error) {
 	var stmts []Stmt
+  var currentSection string = ""
 
 	// ファイルをオープンします。
 	file, err := os.Open(filename)
@@ -180,6 +195,8 @@ func ParseFile(filename string) ([]Stmt, error) {
 		if err != nil {
 			return nil, fmt.Errorf("%s:%d: Error: %s\n", filename, row, err.Error())
 		}
+    changeSection(&currentSection, newStmt)
+    newStmt.section = currentSection
 		stmts = append(stmts, newStmt) // 行を処理します。
 		row++
 	}

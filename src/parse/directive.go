@@ -60,6 +60,10 @@ func analyzeDirArgType(val string) DirectiveArgType {
 	return STR
 }
 
+func (d Directive) isSection() bool {
+  return d.name == Text || d.name == Data || d.name == RoData || d.name == Bss
+}
+
 // directive
 // map[string][]string
 const (
@@ -204,6 +208,9 @@ func (st *Stmt) parseDirective(val string) error {
 		return errors.New(fmt.Sprintf(ErrMsg, d.src[d.idx]))
 	}
 
+  if d.isSection() {
+    st.section = d.name
+  }
 	st.dir = &d
 	return nil
 }

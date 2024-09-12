@@ -127,12 +127,14 @@ func setSectionAlignment(s Elf32Shdr, alignStr string) Elf32Shdr {
 }
 
 func (e *Elf32) resolveShnx(name string) Elf32Half {
+  dataIdx := 0
   ret := 0
-  for _, section := range e.shdr {
-    if string(e.strtbl.data[section.ShName:len(name)]) == name {
+  for _, _ = range e.shdr {
+    if string(e.strtbl.data[dataIdx:len(name)]) == name {
       break
     }
     ret++
+    dataIdx++
   }
   return Elf32Half(ret)
 }

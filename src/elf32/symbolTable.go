@@ -53,16 +53,6 @@ type Elf32SymtblEntry struct {
   shndx Elf32Half // section header table index which symbol belongs to
 }
 
-func (e Elf32SymtblEntry) printSymbolTable(strtabl Elf32Strtbl) {
-  fmt.Println("name=", e.name)
-  fmt.Println("value=", e.value)
-  fmt.Println("size=", e.size)
-  fmt.Println("info.binding=", e.info >> 4)
-  fmt.Println("info.type=", e.info & 0x0F)
-  fmt.Println("other=", e.other)
-  fmt.Println("shndx=", e.shndx)
-}
-
 var symbolInfoTypes = map[string]uint8{
     "@notype":     STT_NOTYPE,
     "@object":     STT_OBJECT,
@@ -73,6 +63,17 @@ var symbolInfoTypes = map[string]uint8{
     "@tls_object": STT_TLS,
 }
 
+func (e *Elf32) initSymbolTables() {
+  e.symtbl = make(map[string]Elf32SymtblEntry)
+  e.symtbl[""] = Elf32SymtblEntry{
+      name:    e.strtbl.resolveIndex(""),
+      value:   0,
+      size:    0,
+      info:    0,
+      other:   0,
+      shndx:   SHN_UNDEF,
+  }
+}
 
 func createSymInfo(binding, typ byte) byte {
     return (binding << 4) | (typ & 0x0F)
@@ -98,4 +99,14 @@ func setSymbolInfo(sym Elf32SymtblEntry, info uint8) Elf32SymtblEntry {
 func setSymbolValue(sym Elf32SymtblEntry, value Elf32Addr) Elf32SymtblEntry {
   sym.value = value
   return sym
+}
+
+func (e Elf32SymtblEntry) printSymbolTable(strtabl Elf32Strtbl) {
+  fmt.Println("name=", e.name)
+  fmt.Println("value=", e.value)
+  fmt.Println("size=", e.size)
+  fmt.Println("info.binding=", e.info >> 4)
+  fmt.Println("info.type=", e.info & 0x0F)
+  fmt.Println("other=", e.other)
+  fmt.Println("shndx=", e.shndx)
 }

@@ -39,8 +39,10 @@ func PrepareElf32Tables(stmts []parse.Stmt) (Elf32, error) {
   var elf Elf32
 
   elf.initHeader()
-  // 出現したsection headerを初期化する
+  // section header を初期化する
   elf.initSectionHeader()
+  // symbol table のindex0にからシンボルを追加
+  elf.initSymbolTables()
 
 
   for _, stmt := range stmts {

@@ -62,7 +62,8 @@ func PrepareElf32Tables(stmts []parse.Stmt) (Elf32, error) {
 
     if stmt.LSymbol() != "" {
       if _, exist := elf.symtbl[stmt.LSymbol()]; !exist {
-        addSymbol(&elf.symtbl, stmt.LSymbol(), elf.strtbl.resolveIndex(stmt.LSymbol()), 0, 0, createSymInfo(STB_LOCAL, STT_NOTYPE), elf.resolveShnx(stmt.Section()))
+        labelName := stmt.LSymbol()[:len(stmt.LSymbol())-1]
+        addSymbol(&elf.symtbl, stmt.LSymbol(), elf.strtbl.resolveIndex(labelName), 0, 0, createSymInfo(STB_LOCAL, STT_NOTYPE), elf.resolveShnx(stmt.Section()))
       }
     }
 

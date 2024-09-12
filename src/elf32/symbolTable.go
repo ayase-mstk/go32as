@@ -101,8 +101,12 @@ func setSymbolValue(sym Elf32SymtblEntry, value Elf32Addr) Elf32SymtblEntry {
   return sym
 }
 
-func (e Elf32SymtblEntry) printSymbolTable(strtabl Elf32Strtbl) {
-  fmt.Println("name=", e.name)
+func (e Elf32SymtblEntry) printSymbolTable(strtbl Elf32Strtbl) {
+  end := int(e.name)
+  for end < len(strtbl.data) && strtbl.data[end] != 0 {
+    end++
+  }
+  fmt.Printf("name=%q\n", strtbl.data[e.name:end])
   fmt.Println("value=", e.value)
   fmt.Println("size=", e.size)
   fmt.Println("info.binding=", e.info >> 4)

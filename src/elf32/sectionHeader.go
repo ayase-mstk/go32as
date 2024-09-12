@@ -44,7 +44,11 @@ type Elf32Shdr struct {
 }
 
 func (e Elf32Shdr) printSectionHeader(strtbl Elf32Strtbl) {
-  fmt.Println("Name=", strtbl.data[e.ShName])
+  end := int(e.ShName)
+  for end < len(strtbl.data) && strtbl.data[end] != 0 {
+    end++
+  }
+  fmt.Printf("Name=%q\n", strtbl.data[e.ShName:end])
   fmt.Println("Type=", e.ShType)
   fmt.Println("Flags=", e.ShFlags)
   fmt.Println("Addr=", e.ShAddr)

@@ -23,12 +23,25 @@ type Elf32Sections struct {
 }
 
 func (e Elf32) PrintAll() {
+  fmt.Println("===================================")
+  fmt.Println("============ ELF Header ===========")
+  fmt.Println("===================================")
   e.ehdr.printELFHeader()
+  fmt.Println("")
+  fmt.Println("===================================")
+  fmt.Println("=========== Symbol Table ==========")
+  fmt.Println("===================================")
   for key, _ := range e.symtbl {
     e.symtbl[key].printSymbolTable(e.strtbl)
+    fmt.Println("")
   }
+  fmt.Println("")
+  fmt.Println("===================================")
+  fmt.Println("========== Section Header =========")
+  fmt.Println("===================================")
   for key, _ := range e.shdr {
     e.shdr[key].printSectionHeader(e.strtbl)
+    fmt.Println("")
   }
 }
 

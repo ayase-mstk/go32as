@@ -191,12 +191,12 @@ func (o Operation) printOperation() {
 func (o *Operation) skipUntilNextOperand() {
 	for ; o.idx < len(o.src); o.idx++ {
 		c := o.src[o.idx]
-		if c != ' ' && c != '\t' && c != ',' && c != '(' && c != ')' {
+		if o.src[o.idx] == '#' { // comment以降は飛ばす
+			o.idx = len(o.src)
 			return
-		} else if o.src[o.idx] == '#' { // comment以降は飛ばす
-			o.idx = len(o.src) - 1
+		} else if c != ' ' && c != '\t' && c != ',' && c != '(' && c != ')' {
 			return
-		}
+    }
 	}
 }
 

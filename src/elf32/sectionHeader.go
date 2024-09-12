@@ -1,6 +1,7 @@
 package elf32
 
 import (
+  "fmt"
   "math"
   "strconv"
 )
@@ -40,6 +41,19 @@ type Elf32Shdr struct {
 	ShInfo      Elf32Word // 追加情報
 	ShAddralign Elf32Word // セクションのメモリアライメント
 	ShEntsize   Elf32Word // セクションのエントリサイズ（テーブルの場合）
+}
+
+func (e Elf32Shdr) printSectionHeader(strtbl Elf32Strtbl) {
+  fmt.Println("Name=", strtbl.data[e.ShName])
+  fmt.Println("Type=", e.ShType)
+  fmt.Println("Flags=", e.ShFlags)
+  fmt.Println("Addr=", e.ShAddr)
+  fmt.Println("Offset=", e.ShOffset)
+  fmt.Println("Size=", e.ShSize)
+  fmt.Println("Link=", e.ShLink)
+  fmt.Println("Info=", e.ShInfo)
+  fmt.Println("Addralign=", e.ShAddralign)
+  fmt.Println("EntSize=", e.ShEntsize)
 }
 
 func (e *Elf32) initSectionHeader() {

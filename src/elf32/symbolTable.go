@@ -1,5 +1,7 @@
 package elf32
 
+import "fmt"
+
 const (
   // special section indexes
   SHN_UNDEF     = 0
@@ -47,8 +49,18 @@ type Elf32SymtblEntry struct {
   value Elf32Addr // symbol address value
   size  Elf32Word // symbol size
   info  uint8     // upper 4bit, lower 4bit symbol type - method or variable, local or global
-  Other uint8     // specifies a symbol's visibility.
+  other uint8     // specifies a symbol's visibility.
   shndx Elf32Half // section header table index which symbol belongs to
+}
+
+func (e Elf32SymtblEntry) printSymbolTable(strtabl Elf32Strtbl) {
+  fmt.Println("name=", e.name)
+  fmt.Println("value=", e.value)
+  fmt.Println("size=", e.size)
+  fmt.Println("info.binding=", e.info >> 4)
+  fmt.Println("info.type=", e.info & 0x0F)
+  fmt.Println("other=", e.other)
+  fmt.Println("shndx=", e.shndx)
 }
 
 var symbolInfoTypes = map[string]uint8{

@@ -132,6 +132,7 @@ var empty_elf []byte = []byte{
 
 func main() {
 	if len(os.Args) != 2 {
+    fmt.Fprintln(os.Stderr, "invalid num of arguments.")
 		os.Exit(0)
 	}
 
@@ -142,21 +143,22 @@ func main() {
 		os.Exit(0)
 	}
 
-  _, err = elf32.PrepareElf32Tables(stmts)
+  e, err := elf32.PrepareElf32Tables(stmts)
 	if err != nil {
 		fmt.Printf("%s: Assembler messages:\n", os.Args[1])
 		fmt.Println(os.Args[1], ":", err.Error())
 		os.Exit(0)
 	}
+  e.PrintAll()
 
-	f, err := os.Create("output.o")
-	if err != nil {
-		fmt.Errorf("Error: %w\n", err)
-	}
-	defer f.Close()
+	//f, err := os.Create("output.o")
+	//if err != nil {
+	//	fmt.Errorf("Error: %w\n", err)
+	//}
+	//defer f.Close()
 
-	_, err = f.Write(exit_elf)
-	if err != nil {
-		fmt.Errorf("Error: %w\n", err)
-	}
+	//_, err = f.Write(exit_elf)
+	//if err != nil {
+	//	fmt.Errorf("Error: %w\n", err)
+	//}
 }

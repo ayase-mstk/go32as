@@ -1,6 +1,7 @@
 package elf32
 
 import (
+  "fmt"
   "unsafe"
 )
 
@@ -40,6 +41,23 @@ type Elf32Ehdr struct {
 	EShentsize Elf32Half      // セクションヘッダーエントリのサイズ
 	EShnum     Elf32Half      // セクションヘッダーのエントリ数
 	EShstrndx  Elf32Half      // セクション名文字列テーブルのインデックス
+}
+
+func (e Elf32Ehdr) printELFHeader() {
+  fmt.Println("ELF Identifier=", e.EIdent)
+  fmt.Println("ELF File Type=", e.EType)
+  fmt.Println("Machine Architecture=", e.EMachine)
+  fmt.Println("ELF Version=", e.EVersion)
+  fmt.Println("Entry Point Address=", e.EEntry)
+  fmt.Println("Program Header Offset=", e.EPhoff)
+  fmt.Println("Section Header Offset=", e.EShoff)
+  fmt.Println("Processor Flag=", e.EFlags)
+  fmt.Println("ELF Header Size=", e.EEhsize)
+  fmt.Println("Program Header Entry Size=", e.EPhentsize)
+  fmt.Println("Program Header Entry Num=", e.EPhnum)
+  fmt.Println("Section Header Entry Size=", e.EShentsize)
+  fmt.Println("Section Header Entry Num=", e.EShnum)
+  fmt.Println("Section Name String Table Index=", e.EShstrndx)
 }
 
 func (e *Elf32) initHeader() {

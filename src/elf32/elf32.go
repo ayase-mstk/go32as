@@ -22,8 +22,18 @@ type Elf32Sections struct {
   bss       []parse.Stmt
 }
 
+func (e Elf32) PrintAll() {
+  e.ehdr.printELFHeader()
+  for key, _ := range e.symtbl {
+    e.symtbl[key].printSymbolTable(e.strtbl)
+  }
+  for key, _ := range e.shdr {
+    e.shdr[key].printSectionHeader(e.strtbl)
+  }
+}
+
 /*
-セクションヘッダーテーブルの初期化と、シンボルテーブルへのラベルとセクションの追加を行い、データ行とコード行行を各セクションに分ける
+セクションヘッダーテーブルの初期化と、シンボルテーブルへのラベルとセクションの追加を行い、データ行とコード行を各セクションに分ける
 */
 func PrepareElf32Tables(stmts []parse.Stmt) (Elf32, error) {
   var elf Elf32

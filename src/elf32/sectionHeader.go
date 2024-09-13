@@ -20,6 +20,7 @@ const (
 	SHTRel      = 9  // 再配置エントリ
 	SHTShlib    = 10 // 保留（意味は定義されていない）
 	SHTDynsym   = 11 // 動的シンボルテーブル
+  SHTRiscvAttributes = 0x70000003
 )
 
 // セクションフラグ
@@ -46,11 +47,11 @@ type Elf32Shdr struct {
 
 type Shdr struct {
   shdrs []Elf32Shdr
-  shnx   map[string]int
+  shndx map[string]int
 }
 
-func (s *Shdr) resolveShnx(name string) Elf32Half {
-  return Elf32Half(s.shnx[name])
+func (s *Shdr) resolveShndx(name string) Elf32Half {
+  return Elf32Half(s.shndx[name])
 }
 
 func (s *Shdr) printSectionHeader(shstrtbl Elf32Shstrtbl) {
@@ -60,15 +61,15 @@ func (s *Shdr) printSectionHeader(shstrtbl Elf32Shstrtbl) {
       end++
     }
     fmt.Printf("Name=%q\n", shstrtbl.data[sh.ShName:end])
-    fmt.Println("Type=", sh.ShType)
-    fmt.Println("Flags=", sh.ShFlags)
-    fmt.Println("Addr=", sh.ShAddr)
-    fmt.Println("Offset=", sh.ShOffset)
-    fmt.Println("Size=", sh.ShSize)
-    fmt.Println("Link=", sh.ShLink)
-    fmt.Println("Info=", sh.ShInfo)
-    fmt.Println("Addralign=", sh.ShAddralign)
-    fmt.Println("EntSize=", sh.ShEntsize)
+    fmt.Printf("Type=%#x\n", sh.ShType)
+    fmt.Printf("Flags=%#x\n", sh.ShFlags)
+    fmt.Printf("Addr=%#x\n", sh.ShAddr)
+    fmt.Printf("Offset=%#x\n", sh.ShOffset)
+    fmt.Printf("Size=%#x\n", sh.ShSize)
+    fmt.Printf("Link=%#x\n", sh.ShLink)
+    fmt.Printf("Info=%#x\n", sh.ShInfo)
+    fmt.Printf("Addralign=%#x\n", sh.ShAddralign)
+    fmt.Printf("EntSize=%#x\n", sh.ShEntsize)
     fmt.Println("")
   }
 }
@@ -77,12 +78,12 @@ func (s *Shdr) AddSection(shdr Elf32Shdr, name string) {
     // shdrs に新しいセクションを追加
     s.shdrs = append(s.shdrs, shdr)
 
-    // shnx にセクション名をキー、shdrs のインデックスを値として追加
-    s.shnx[name] = len(s.shdrs) - 1
+    // shndx にセクション名をキー、shdrs のインデックスを値として追加
+    s.shndx[name] = len(s.shdrs) - 1
 }
 
 func (e *Elf32) initSectionHeader() {
-  e.shdr.shnx = make(map[string]int)
+  e.shdr.shndx = make(map[string]int)
 
   nullSection := Elf32Shdr{
       ShName:      e.shstrtbl.resolveIndex(""),
@@ -103,7 +104,7 @@ func (e *Elf32) initSectionHeader() {
       ShType:      SHTProgbits,
       ShFlags:     SHFAlloc | SHFExecinstr,
       ShAddr:      0,
-      ShOffset:    0,
+      ShOffset:    0x34,
       ShSize:      0,
       ShLink:      0,
       ShInfo:      0,
@@ -140,10 +141,38 @@ func (e *Elf32) initSectionHeader() {
   }
   e.shdr.AddSection(bssSection, ".bss")
 
-  rodataSection := Elf32Shdr{
-      ShName:      e.shstrtbl.resolveIndex(".rodata"),
-      ShType:      SHTProgbits,
-      ShFlags:     SHFAlloc,
+  riscvSection := Elf32Shdr{
+      ShName:      e.shstrtbl.resolveIndex(".riscv.attributes"),
+      ShType:      SHTRiscvAttributes,
+      ShFlags:     0,
+      ShAddr:      0,
+      ShOffset:    0,
+      ShSize:      0x5f,
+      ShLink:      0,
+      ShInfo:      0,
+      ShAddralign: 1,
+      ShEntsize:   0,
+  }
+  e.shdr.AddSection(riscvSection, ".riscv.attributes")
+
+  //rodataSection := Elf32Shdr{
+  //    ShName:      e.shstrtbl.resolveIndex(".rodata"),
+  //    ShType:      SHTProgbits,
+  //    ShFlags:     SHFAlloc,
+  //    ShAddr:      0,
+  //    ShOffset:    0,
+  //    ShSize:      0,
+  //    ShLink:      0,
+  //    ShInfo:      0,
+  //    ShAddralign: 4,
+  //    ShEntsize:   0,
+  //}
+  //e.shdr.AddSection(rodataSection, ".rodata")
+
+  symSection := Elf32Shdr{
+      ShName:      e.shstrtbl.resolveIndex(".symtab"),
+      ShType:      SHTSymtab,
+      ShFlags:     0,
       ShAddr:      0,
       ShOffset:    0,
       ShSize:      0,
@@ -152,11 +181,79 @@ func (e *Elf32) initSectionHeader() {
       ShAddralign: 4,
       ShEntsize:   0,
   }
-  e.shdr.AddSection(rodataSection, ".rodata")
+  e.shdr.AddSection(symSection, ".symtab")
+
+  strSection := Elf32Shdr{
+      ShName:      e.shstrtbl.resolveIndex(".strtab"),
+      ShType:      SHTStrtab,
+      ShFlags:     0,
+      ShAddr:      0,
+      ShOffset:    0,
+      ShSize:      0,
+      ShLink:      0,
+      ShInfo:      0,
+      ShAddralign: 1,
+      ShEntsize:   0,
+  }
+  e.shdr.AddSection(strSection, ".strtab")
+
+  shstrSection := Elf32Shdr{
+      ShName:      e.shstrtbl.resolveIndex(".shstrtab"),
+      ShType:      SHTStrtab,
+      ShFlags:     0,
+      ShAddr:      0,
+      ShOffset:    0,
+      ShSize:      0,
+      ShLink:      0,
+      ShInfo:      0,
+      ShAddralign: 1,
+      ShEntsize:   0,
+  }
+  e.shdr.AddSection(shstrSection, ".shstrtab")
 }
 
-func (s *Shdr) setSectionAlignment(name, alignStr string) {
-  idx := s.shnx[name]
+func (s *Shdr) setAddrAlign(name, alignStr string) {
+  idx := s.shndx[name]
   align, _ := strconv.Atoi(alignStr)
   s.shdrs[idx].ShAddralign = Elf32Word(math.Pow(2, float64(align)))
+}
+
+func (s *Shdr) setSize(name string, size Elf32Word) {
+  idx := s.shndx[name]
+  s.shdrs[idx].ShSize = size
+}
+
+func (s *Shdr) setOffset(name string, off Elf32Off) {
+  idx := s.shndx[name]
+  s.shdrs[idx].ShOffset = off
+}
+
+func (s *Shdr) setLink(name string, link Elf32Word) {
+  idx := s.shndx[name]
+  s.shdrs[idx].ShLink = link
+}
+
+func (s *Shdr) setInfo(name string, info Elf32Word) {
+  idx := s.shndx[name]
+  s.shdrs[idx].ShInfo = info
+}
+
+func (s *Shdr) setEntsize(name string, es Elf32Word) {
+  idx := s.shndx[name]
+  s.shdrs[idx].ShEntsize = es
+}
+
+func (s *Shdr) getOffset(name string) Elf32Off {
+  idx := s.shndx[name]
+  return s.shdrs[idx].ShOffset
+}
+
+func (s *Shdr) getSize(name string) Elf32Word {
+  idx := s.shndx[name]
+  return s.shdrs[idx].ShSize
+}
+
+func (s *Shdr) getEntsize(name string) Elf32Word {
+  idx := s.shndx[name]
+  return s.shdrs[idx].ShEntsize
 }

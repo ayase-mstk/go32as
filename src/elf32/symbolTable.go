@@ -140,3 +140,13 @@ func (s *Symtbl) printSymbolTable(strtbl Elf32Strtbl) {
     fmt.Println("")
   }
 }
+
+func (s *Symtbl) calcLastLocalSymIdx() Elf32Word {
+  last := 0
+  for i, sym := range s.symtbls {
+    if sym.info >> 4 == STB_LOCAL {
+      last = i
+    }
+  }
+  return Elf32Word(last)
+}

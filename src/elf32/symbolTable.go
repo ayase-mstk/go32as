@@ -53,6 +53,11 @@ type Elf32SymtblEntry struct {
   shndx Elf32Half // section header table index which symbol belongs to
 }
 
+type Symtbl struct {
+  symtbls []Elf32SymtblEntry
+  idx     map[string]int
+}
+
 var symbolInfoTypes = map[string]uint8{
     "@notype":     STT_NOTYPE,
     "@object":     STT_OBJECT,
@@ -64,8 +69,7 @@ var symbolInfoTypes = map[string]uint8{
 }
 
 func (e *Elf32) initSymbolTables() {
-  e.symtbl = make(map[string]Elf32SymtblEntry)
-  e.symtbl[""] = Elf32SymtblEntry{
+  nilSymbol := Elf32SymtblEntry{
       name:    e.strtbl.resolveIndex(""),
       value:   0,
       size:    0,
@@ -73,13 +77,27 @@ func (e *Elf32) initSymbolTables() {
       other:   0,
       shndx:   SHN_UNDEF,
   }
+  e.symtbl.addSymbol(nilSymbol, "")
+}
+
+func (s *Symtbl) addSymbol(sym Elf32SymtblEntry, name string) {
+    // Initialize the idx map if it's not already initialized
+    if s.idx == nil {
+        s.idx = make(map[string]int)
+    }
+
+    // Add the new symbol entry to the symtbls slice
+    s.symtbls = append(s.symtbls, sym)
+
+    // Add the symbol name to idx with the index of the new entry
+    s.idx[name] = len(s.symtbls) - 1
 }
 
 func createSymInfo(binding, typ byte) byte {
     return (binding << 4) | (typ & 0x0F)
 }
 
-func addSymbol(symtbls *map[string]Elf32SymtblEntry, key string, name Elf32Word, value Elf32Addr, size Elf32Word, info byte, shndx Elf32Half) {
+func newSymbol(key string, name Elf32Word, value Elf32Addr, size Elf32Word, info byte, shndx Elf32Half) Elf32SymtblEntry {
   newEntry := Elf32SymtblEntry{
     name:   name,
     value:  value,
@@ -88,29 +106,37 @@ func addSymbol(symtbls *map[string]Elf32SymtblEntry, key string, name Elf32Word,
     shndx:  shndx,
   }
 
-  (*symtbls)[key] = newEntry
+  return newEntry
 }
 
-func setSymbolInfo(sym Elf32SymtblEntry, info uint8) Elf32SymtblEntry {
-  sym.info = info
-  return sym
+func (s *Symtbl) setInfo(name string, info uint8) {
+  id := s.idx[name]
+  s.symtbls[id].info = info
 }
 
-func setSymbolValue(sym Elf32SymtblEntry, value Elf32Addr) Elf32SymtblEntry {
-  sym.value = value
-  return sym
+func (s *Symtbl) setValue(name string, value Elf32Addr) {
+  id := s.idx[name]
+  s.symtbls[id].value = value
 }
 
-func (e Elf32SymtblEntry) printSymbolTable(strtbl Elf32Strtbl) {
-  end := int(e.name)
-  for end < len(strtbl.data) && strtbl.data[end] != 0 {
-    end++
+func (s *Symtbl) SymbolExists(name string) bool {
+    _, exists := s.idx[name]
+    return exists
+}
+
+func (s *Symtbl) printSymbolTable(strtbl Elf32Strtbl) {
+  for _, sym := range s.symtbls {
+    end := int(sym.name)
+    for end < len(strtbl.data) && strtbl.data[end] != 0 {
+      end++
+    }
+    fmt.Printf("name=%q\n", strtbl.data[sym.name:end])
+    fmt.Println("value=", sym.value)
+    fmt.Println("size=", sym.size)
+    fmt.Println("info.binding=", sym.info >> 4)
+    fmt.Println("info.type=", sym.info & 0x0F)
+    fmt.Println("other=", sym.other)
+    fmt.Println("shndx=", sym.shndx)
+    fmt.Println("")
   }
-  fmt.Printf("name=%q\n", strtbl.data[e.name:end])
-  fmt.Println("value=", e.value)
-  fmt.Println("size=", e.size)
-  fmt.Println("info.binding=", e.info >> 4)
-  fmt.Println("info.type=", e.info & 0x0F)
-  fmt.Println("other=", e.other)
-  fmt.Println("shndx=", e.shndx)
 }

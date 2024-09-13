@@ -43,21 +43,21 @@ type Elf32Ehdr struct {
 	EShstrndx  Elf32Half      // セクション名文字列テーブルのインデックス
 }
 
-func (e Elf32Ehdr) printELFHeader() {
-  fmt.Println("ELF Identifier=", e.EIdent)
-  fmt.Println("ELF File Type=", e.EType)
-  fmt.Println("Machine Architecture=", e.EMachine)
-  fmt.Println("ELF Version=", e.EVersion)
-  fmt.Println("Entry Point Address=", e.EEntry)
-  fmt.Println("Program Header Offset=", e.EPhoff)
-  fmt.Println("Section Header Offset=", e.EShoff)
-  fmt.Println("Processor Flag=", e.EFlags)
-  fmt.Println("ELF Header Size=", e.EEhsize)
-  fmt.Println("Program Header Entry Size=", e.EPhentsize)
-  fmt.Println("Program Header Entry Num=", e.EPhnum)
-  fmt.Println("Section Header Entry Size=", e.EShentsize)
-  fmt.Println("Section Header Entry Num=", e.EShnum)
-  fmt.Println("Section Name String Table Index=", e.EShstrndx)
+func (e *Elf32Ehdr) printELFHeader() {
+  fmt.Printf("ELF Identifier=%#x\n", e.EIdent)
+  fmt.Printf("ELF File Type=%#x\n", e.EType)
+  fmt.Printf("Machine Architecture=%#x\n", e.EMachine)
+  fmt.Printf("ELF Version=%#x\n", e.EVersion)
+  fmt.Printf("Entry Point Address=%#x\n", e.EEntry)
+  fmt.Printf("Program Header Offset=%#x\n", e.EPhoff)
+  fmt.Printf("Section Header Offset=%#x\n", e.EShoff)
+  fmt.Printf("Processor Flag=%#x\n", e.EFlags)
+  fmt.Printf("ELF Header Size=%#x\n", e.EEhsize)
+  fmt.Printf("Program Header Entry Size=%#x\n", e.EPhentsize)
+  fmt.Printf("Program Header Entry Num=%#x\n", e.EPhnum)
+  fmt.Printf("Section Header Entry Size=%#x\n", e.EShentsize)
+  fmt.Printf("Section Header Entry Num=%#x\n", e.EShnum)
+  fmt.Printf("Section Name String Table Index=%#x\n", e.EShstrndx)
 }
 
 func (e *Elf32) initHeader() {

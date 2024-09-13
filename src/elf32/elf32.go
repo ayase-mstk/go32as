@@ -58,7 +58,7 @@ func PrepareElf32Tables(stmts []parse.Stmt) (Elf32, error) {
     if stmt.LSymbol() != "" {
       if !elf.symtbl.SymbolExists(stmt.LSymbol()) {
         labelName := stmt.LSymbol()[:len(stmt.LSymbol())-1]
-        newSym := newSymbol(stmt.LSymbol(), elf.strtbl.resolveIndex(labelName), 0, 0, createSymInfo(STB_LOCAL, STT_NOTYPE), elf.shdr.resolveShnx(stmt.Section()))
+        newSym := newSymbol(stmt.LSymbol(), elf.strtbl.resolveIndex(labelName), 0, 0, createSymInfo(STB_LOCAL, STT_NOTYPE), elf.shdr.resolveShndx(stmt.Section()))
         elf.symtbl.addSymbol(newSym, stmt.Section())
       }
     }
@@ -84,14 +84,14 @@ func (e *Elf32) handleDirective(s parse.Stmt) {
   case ".rodata":
   case ".bss":
     if !e.symtbl.SymbolExists(s.Section()) {
-      newSym := newSymbol(s.Section(), e.shstrtbl.resolveIndex(s.Section()), 0, 0, createSymInfo(STB_LOCAL, STT_SECTION), e.shdr.resolveShnx(s.Section()))
+      newSym := newSymbol(s.Section(), e.shstrtbl.resolveIndex(s.Section()), 0, 0, createSymInfo(STB_LOCAL, STT_SECTION), e.shdr.resolveShndx(s.Section()))
       e.symtbl.addSymbol(newSym, s.Section())
     }
 
     break
 
   case ".align":
-    e.shdr.setSectionAlignment(s.Section(), s.Dir().Args()[0])
+    e.shdr.setAddrAlign(s.Section(), s.Dir().Args()[0])
     break
 
   case ".file":
@@ -103,7 +103,7 @@ func (e *Elf32) handleDirective(s parse.Stmt) {
     if e.symtbl.SymbolExists(s.Dir().Args()[0]) {
       e.symtbl.setInfo(s.Dir().Args()[0], createSymInfo(STB_LOCAL, (e.symtbl.symtbls[e.symtbl.idx[s.Dir().Args()[0]]].info & 0x0F)))
     } else {
-      newSym := newSymbol(s.Dir().Args()[0],  e.strtbl.resolveIndex(s.Dir().Args()[0]), 0, 0, createSymInfo(STB_LOCAL, STT_NOTYPE), e.shdr.resolveShnx(s.Section()))
+      newSym := newSymbol(s.Dir().Args()[0],  e.strtbl.resolveIndex(s.Dir().Args()[0]), 0, 0, createSymInfo(STB_LOCAL, STT_NOTYPE), e.shdr.resolveShndx(s.Section()))
       e.symtbl.addSymbol(newSym, s.Dir().Args()[0])
     }
     break
@@ -112,7 +112,7 @@ func (e *Elf32) handleDirective(s parse.Stmt) {
     if e.symtbl.SymbolExists(s.Dir().Args()[0]) {
       e.symtbl.setInfo(s.Dir().Args()[0], createSymInfo(STB_LOCAL, (e.symtbl.symtbls[e.symtbl.idx[s.Dir().Args()[0]]].info & 0x0F)))
     } else {
-      newSym := newSymbol(s.Dir().Args()[0],  e.strtbl.resolveIndex(s.Dir().Args()[0]), 0, 0, createSymInfo(STB_GLOBAL, STT_NOTYPE), e.shdr.resolveShnx(s.Section()))
+      newSym := newSymbol(s.Dir().Args()[0],  e.strtbl.resolveIndex(s.Dir().Args()[0]), 0, 0, createSymInfo(STB_GLOBAL, STT_NOTYPE), e.shdr.resolveShndx(s.Section()))
       e.symtbl.addSymbol(newSym, s.Dir().Args()[0])
     }
     break
@@ -142,7 +142,7 @@ func (e *Elf32) handleDirective(s parse.Stmt) {
     if e.symtbl.SymbolExists(s.Dir().Args()[0]) {
       e.symtbl.setValue(s.Dir().Args()[0], Elf32Addr(val))
     } else {
-      newSym := newSymbol(s.Dir().Args()[0],  e.strtbl.resolveIndex(s.Dir().Args()[0]), Elf32Addr(val), 0, createSymInfo(STB_LOCAL, STT_NOTYPE), e.shdr.resolveShnx(s.Section()))
+      newSym := newSymbol(s.Dir().Args()[0],  e.strtbl.resolveIndex(s.Dir().Args()[0]), Elf32Addr(val), 0, createSymInfo(STB_LOCAL, STT_NOTYPE), e.shdr.resolveShndx(s.Section()))
       e.symtbl.addSymbol(newSym, s.Dir().Args()[0])
     }
     break
@@ -152,7 +152,7 @@ func (e *Elf32) handleDirective(s parse.Stmt) {
     if e.symtbl.SymbolExists(s.Dir().Args()[0]) {
       e.symtbl.setInfo(s.Dir().Args()[0], createSymInfo(e.symtbl.symtbls[e.symtbl.idx[s.Dir().Args()[0]]].info >> 4, symbolType))
     } else {
-      newSym := newSymbol(s.Dir().Args()[0],  e.strtbl.resolveIndex(s.Dir().Args()[0]), 0, 0, createSymInfo(STB_LOCAL, symbolType), e.shdr.resolveShnx(s.Section()))
+      newSym := newSymbol(s.Dir().Args()[0],  e.strtbl.resolveIndex(s.Dir().Args()[0]), 0, 0, createSymInfo(STB_LOCAL, symbolType), e.shdr.resolveShndx(s.Section()))
       e.symtbl.addSymbol(newSym, s.Dir().Args()[0])
     }
     break

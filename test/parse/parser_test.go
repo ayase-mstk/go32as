@@ -8,19 +8,6 @@ import (
 	"testing"
 )
 
-/*
-  コメントがUnicodeの場合があるので、rune単位で読み込む
-func  readFile(filename string) ([]rune, error) {
-  data, err := os.ReadFile(filename)
-  if err != nil {
-    return nil, err
-  }
-
-  runes := []rune(string(data))
-  return runes, nil
-}
-*/
-
 type parseTestStruct struct {
 	expectedType  parse.StmtType
 	expectedLabel string
@@ -227,6 +214,28 @@ func TestParser8(t *testing.T) {
 
 	expectSame(t, stmts, tests)
 }
+
+func TestParser9(t *testing.T) {
+	var stmts []parse.Stmt
+	input := []rune("     lw x5, 10(x5)     #this is comment")
+	stmt, err := parse.ParseLine(input, 3)
+	if err != nil {
+		t.Fatalf("test - parser failed:\n%q", err.Error())
+	}
+	stmts = append(stmts, stmt)
+
+	tests := []parseTestStruct{
+		{
+			expectedType:  parse.OPERATION,
+			expectedLabel: "",
+			expectedRow:   3,
+		},
+	}
+
+	expectSame(t, stmts, tests)
+}
+
+
 
 /*
 ==========================================

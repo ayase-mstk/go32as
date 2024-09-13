@@ -53,13 +53,13 @@ func (s *Shdr) resolveShnx(name string) Elf32Half {
   return Elf32Half(s.shnx[name])
 }
 
-func (s *Shdr) printSectionHeader(strtbl Elf32Strtbl) {
+func (s *Shdr) printSectionHeader(shstrtbl Elf32Shstrtbl) {
   for _, sh := range s.shdrs {
     end := int(sh.ShName)
-    for end < len(strtbl.data) && strtbl.data[end] != 0 {
+    for end < len(shstrtbl.data) && shstrtbl.data[end] != 0 {
       end++
     }
-    fmt.Printf("Name=%q\n", strtbl.data[sh.ShName:end])
+    fmt.Printf("Name=%q\n", shstrtbl.data[sh.ShName:end])
     fmt.Println("Type=", sh.ShType)
     fmt.Println("Flags=", sh.ShFlags)
     fmt.Println("Addr=", sh.ShAddr)
@@ -85,7 +85,7 @@ func (e *Elf32) initSectionHeader() {
   e.shdr.shnx = make(map[string]int)
 
   nullSection := Elf32Shdr{
-      ShName:      e.strtbl.resolveIndex(""),
+      ShName:      e.shstrtbl.resolveIndex(""),
       ShType:      SHTNull,
       ShFlags:     0,
       ShAddr:      0,
@@ -99,7 +99,7 @@ func (e *Elf32) initSectionHeader() {
   e.shdr.AddSection(nullSection, "")
 
   textSection := Elf32Shdr{
-      ShName:      e.strtbl.resolveIndex(".text"),
+      ShName:      e.shstrtbl.resolveIndex(".text"),
       ShType:      SHTProgbits,
       ShFlags:     SHFAlloc | SHFExecinstr,
       ShAddr:      0,
@@ -113,7 +113,7 @@ func (e *Elf32) initSectionHeader() {
   e.shdr.AddSection(textSection, ".text")
 
   dataSection := Elf32Shdr{
-      ShName:      e.strtbl.resolveIndex(".data"),
+      ShName:      e.shstrtbl.resolveIndex(".data"),
       ShType:      SHTProgbits,
       ShFlags:     SHFWrite | SHFAlloc,
       ShAddr:      0,
@@ -127,7 +127,7 @@ func (e *Elf32) initSectionHeader() {
   e.shdr.AddSection(dataSection, ".data")
 
   bssSection := Elf32Shdr{
-      ShName:      e.strtbl.resolveIndex(".bss"),
+      ShName:      e.shstrtbl.resolveIndex(".bss"),
       ShType:      SHTNobits,
       ShFlags:     SHFWrite | SHFAlloc,
       ShAddr:      0,
@@ -141,7 +141,7 @@ func (e *Elf32) initSectionHeader() {
   e.shdr.AddSection(bssSection, ".bss")
 
   rodataSection := Elf32Shdr{
-      ShName:      e.strtbl.resolveIndex(".rodata"),
+      ShName:      e.shstrtbl.resolveIndex(".rodata"),
       ShType:      SHTProgbits,
       ShFlags:     SHFAlloc,
       ShAddr:      0,

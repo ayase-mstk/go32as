@@ -11,6 +11,7 @@ type Elf32 struct {
   ehdr      Elf32Ehdr
   symtbl    Symtbl
   strtbl    Elf32Strtbl
+  shstrtbl  Elf32Shstrtbl
   shdr      Shdr
   sections  Elf32Sections
 }
@@ -36,7 +37,7 @@ func (e *Elf32) PrintAll() {
   fmt.Println("===================================")
   fmt.Println("========== Section Header =========")
   fmt.Println("===================================")
-  e.shdr.printSectionHeader(e.strtbl)
+  e.shdr.printSectionHeader(e.shstrtbl)
 }
 
 /*
@@ -55,8 +56,7 @@ func PrepareElf32Tables(stmts []parse.Stmt) (Elf32, error) {
   for _, stmt := range stmts {
 
     if stmt.LSymbol() != "" {
-      fmt.Println("section = ", stmt.Section())
-      if _, exist := elf.symtbl.idx[stmt.LSymbol()]; !exist {
+      if !elf.symtbl.SymbolExists(stmt.LSymbol()) {
         labelName := stmt.LSymbol()[:len(stmt.LSymbol())-1]
         newSym := newSymbol(stmt.LSymbol(), elf.strtbl.resolveIndex(labelName), 0, 0, createSymInfo(STB_LOCAL, STT_NOTYPE), elf.shdr.resolveShnx(stmt.Section()))
         elf.symtbl.addSymbol(newSym, stmt.Section())
@@ -84,7 +84,7 @@ func (e *Elf32) handleDirective(s parse.Stmt) {
   case ".rodata":
   case ".bss":
     if !e.symtbl.SymbolExists(s.Section()) {
-      newSym := newSymbol(s.Section(), e.strtbl.resolveIndex(s.Section()), 0, 0, createSymInfo(STB_LOCAL, STT_SECTION), e.shdr.resolveShnx(s.Section()))
+      newSym := newSymbol(s.Section(), e.shstrtbl.resolveIndex(s.Section()), 0, 0, createSymInfo(STB_LOCAL, STT_SECTION), e.shdr.resolveShnx(s.Section()))
       e.symtbl.addSymbol(newSym, s.Section())
     }
 

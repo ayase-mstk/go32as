@@ -21,16 +21,16 @@ func (d *Directive) isEOF() bool {
 	return d.idx == len(d.src)
 }
 func (d *Directive) nextVal() (string, DirectiveArgType) {
-  isLiteral := false
-	start     := d.idx
+	isLiteral := false
+	start := d.idx
 	for ; d.idx < len(d.src); d.idx++ {
-    if '"' == d.src[d.idx] && !isLiteral {
-      isLiteral = true
-    } else if '"' == d.src[d.idx] && isLiteral {
-      isLiteral = false
-    } else if isLiteral {
-      continue
-    }
+		if '"' == d.src[d.idx] && !isLiteral {
+			isLiteral = true
+		} else if '"' == d.src[d.idx] && isLiteral {
+			isLiteral = false
+		} else if isLiteral {
+			continue
+		}
 		c := d.src[d.idx]
 		if c == ' ' || c == '\t' || c == ',' || c == '(' || c == ')' {
 			//if isDelim(o.src[o.idx]) {
@@ -50,18 +50,18 @@ func (d *Directive) skipUntilNextVal() {
 			return
 		} else if c != ' ' && c != '\t' && c != ',' && c != '(' && c != ')' {
 			return
-    }
+		}
 	}
 }
 func analyzeDirArgType(val string) DirectiveArgType {
-  if isImmediate(val) {
+	if isImmediate(val) {
 		return INT
-  }
+	}
 	return STR
 }
 
 func (d Directive) isSection() bool {
-  return d.name == Text || d.name == Data || d.name == RoData || d.name == Bss
+	return d.name == Text || d.name == Data || d.name == RoData || d.name == Bss
 }
 
 // directive
@@ -98,7 +98,7 @@ const (
 	Long  = ".long"
 	// Float      = ".float"
 	// DtprelWord = ".dtprelword"
-	Zero      = ".zero"
+	Zero = ".zero"
 	// VariantCC = ".variant_cc"
 	Attribute = ".attribute"
 )
@@ -111,7 +111,7 @@ const (
 )
 
 var directiveSet = map[string][]DirectiveArgType{
-	Align:   {INT},
+	Align: {INT},
 	// P2Align:    {},
 	// BAlign:     {},
 	File:    {STR},
@@ -120,7 +120,7 @@ var directiveSet = map[string][]DirectiveArgType{
 	Comm:    {STR, INT, INT},
 	Common:  {STR, INT, INT},
 	Ident:   {STR},
-	Section: {STR}, // STRというより、セクション名
+	Section: {STR},      // STRというより、セクション名
 	Size:    {STR, INT}, // とりあえずアドレス計算は対応しない
 	Text:    {},
 	Data:    {},
@@ -142,7 +142,7 @@ var directiveSet = map[string][]DirectiveArgType{
 	Long:  {INT},
 	// Float:      {},
 	// DtprelWord: {},
-	Zero:      {INT},
+	Zero: {INT},
 	// VariantCC: {STR},
 	Attribute: {STR, INT},
 }
@@ -202,15 +202,15 @@ func (st *Stmt) parseDirective(val string) error {
 	}
 
 	// その行に文字列が残っていたらエラー
-  if argTypIdx != len(d.argTyps) {
+	if argTypIdx != len(d.argTyps) {
 		return errors.New("missing argument.")
-  } else if !d.isEOF() {
+	} else if !d.isEOF() {
 		return errors.New(fmt.Sprintf(ErrMsg, d.src[d.idx]))
 	}
 
-  if d.isSection() {
-    st.section = d.name
-  }
+	if d.isSection() {
+		st.section = d.name
+	}
 	st.dir = &d
 	return nil
 }

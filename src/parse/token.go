@@ -2,7 +2,6 @@ package parse
 
 import (
 	"fmt"
-	"github.com/ayase-mstk/go32as/src/utils"
 	"strings"
 )
 
@@ -41,14 +40,14 @@ func (t Token) isLabel() bool {
 	}
 	literal = literal[:len(literal)-1]
 	// すべて数値
-	if utils.IsNumericStr(literal[:len(literal)-1]) {
+	if isNumericStr(literal[:len(literal)-1]) {
 		return true
 	}
 	// 接頭辞はalphabetかアンダーバー
-	if utils.IsAlpha(literal[0]) || literal[0] == '_' || literal[0] == '.' {
+	if isAlpha(literal[0]) || literal[0] == '_' || literal[0] == '.' {
 		literal = literal[1:]
 		for i := 0; i < len(literal); i++ {
-			if !(utils.IsAlpha(literal[i]) || utils.IsNumeric(literal[i]) || literal[i] == '_' || literal[i] == '.') {
+			if !(isAlpha(literal[i]) || isNumeric(literal[i]) || literal[i] == '_' || literal[i] == '.') {
 				return false
 			}
 		}

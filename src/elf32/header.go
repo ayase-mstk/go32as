@@ -1,8 +1,8 @@
 package elf32
 
 import (
-  "fmt"
-  "unsafe"
+	"fmt"
+	"unsafe"
 )
 
 const (
@@ -44,20 +44,20 @@ type Elf32Ehdr struct {
 }
 
 func (e *Elf32Ehdr) printELFHeader() {
-  fmt.Printf("ELF Identifier=%#x\n", e.EIdent)
-  fmt.Printf("ELF File Type=%#x\n", e.EType)
-  fmt.Printf("Machine Architecture=%#x\n", e.EMachine)
-  fmt.Printf("ELF Version=%#x\n", e.EVersion)
-  fmt.Printf("Entry Point Address=%#x\n", e.EEntry)
-  fmt.Printf("Program Header Offset=%#x\n", e.EPhoff)
-  fmt.Printf("Section Header Offset=%#x\n", e.EShoff)
-  fmt.Printf("Processor Flag=%#x\n", e.EFlags)
-  fmt.Printf("ELF Header Size=%#x\n", e.EEhsize)
-  fmt.Printf("Program Header Entry Size=%#x\n", e.EPhentsize)
-  fmt.Printf("Program Header Entry Num=%#x\n", e.EPhnum)
-  fmt.Printf("Section Header Entry Size=%#x\n", e.EShentsize)
-  fmt.Printf("Section Header Entry Num=%#x\n", e.EShnum)
-  fmt.Printf("Section Name String Table Index=%#x\n", e.EShstrndx)
+	fmt.Printf("ELF Identifier=%#x\n", e.EIdent)
+	fmt.Printf("ELF File Type=%#x\n", e.EType)
+	fmt.Printf("Machine Architecture=%#x\n", e.EMachine)
+	fmt.Printf("ELF Version=%#x\n", e.EVersion)
+	fmt.Printf("Entry Point Address=%#x\n", e.EEntry)
+	fmt.Printf("Program Header Offset=%#x\n", e.EPhoff)
+	fmt.Printf("Section Header Offset=%#x\n", e.EShoff)
+	fmt.Printf("Processor Flag=%#x\n", e.EFlags)
+	fmt.Printf("ELF Header Size=%#x\n", e.EEhsize)
+	fmt.Printf("Program Header Entry Size=%#x\n", e.EPhentsize)
+	fmt.Printf("Program Header Entry Num=%#x\n", e.EPhnum)
+	fmt.Printf("Section Header Entry Size=%#x\n", e.EShentsize)
+	fmt.Printf("Section Header Entry Num=%#x\n", e.EShnum)
+	fmt.Printf("Section Name String Table Index=%#x\n", e.EShstrndx)
 }
 
 func (e *Elf32) initHeader() {

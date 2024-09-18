@@ -2,9 +2,9 @@ package parse
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
 	"os"
-  "errors"
 )
 
 const ErrMsg string = "junk at end of line, first unrecognized character is `%c'"
@@ -52,7 +52,7 @@ type Stmt struct {
 	typ         StmtType
 	op          *Operation
 	dir         *Directive
-  section     string
+	section     string
 	labelSymbol string
 	row         int
 	src         []rune
@@ -93,16 +93,16 @@ func (s *Stmt) isEOF() bool {
 }
 
 func (s *Stmt) getToken() Token {
-  isLiteral := false
-	start     := s.idx
+	isLiteral := false
+	start := s.idx
 	for ; s.idx < len(s.src); s.idx++ {
-    if '"' == s.src[s.idx] && !isLiteral {
-      isLiteral = true
-    } else if '"' == s.src[s.idx] && isLiteral {
-      isLiteral = false
-    } else if isLiteral {
-      continue
-    }
+		if '"' == s.src[s.idx] && !isLiteral {
+			isLiteral = true
+		} else if '"' == s.src[s.idx] && isLiteral {
+			isLiteral = false
+		} else if isLiteral {
+			continue
+		}
 		if isDelim(s.src[s.idx]) {
 			break
 		}
@@ -114,15 +114,15 @@ func (s *Stmt) getToken() Token {
 }
 
 func changeSection(curSection *string, s Stmt) {
-  if s.Dir() == nil {
-    return
-  }
+	if s.Dir() == nil {
+		return
+	}
 
-  if s.Dir().Name() == Section {
-    *curSection = s.dir.args[0]
-  } else if s.Dir().isSection() {
-    *curSection = s.dir.name
-  }
+	if s.Dir().Name() == Section {
+		*curSection = s.dir.args[0]
+	} else if s.Dir().isSection() {
+		*curSection = s.dir.name
+	}
 }
 
 func ParseLine(input []rune, row int) (Stmt, error) {
@@ -142,7 +142,10 @@ func ParseLine(input []rune, row int) (Stmt, error) {
 
 	if tk.Type() == TLabel {
 		// set symbol
-		stmt.labelSymbol = tk.Val()
+		if len(tk.Val()) == 0 {
+			return stmt, errors.New(fmt.Sprintf(ErrMsg, tk.Val()[0]))
+		}
+		stmt.labelSymbol = tk.Val()[:len(tk.Val())-1]
 		stmt.skipUntilNextToken()
 		if stmt.isEOF() {
 			stmt.setType()
@@ -165,9 +168,9 @@ func ParseLine(input []rune, row int) (Stmt, error) {
 		stmt.setType()
 		return stmt, err
 	default:
-    if tk.Val() != "" {
-      return stmt, errors.New(fmt.Sprintf(ErrMsg, tk.Val()[0]))
-    }
+		if tk.Val() != "" {
+			return stmt, errors.New(fmt.Sprintf(ErrMsg, tk.Val()[0]))
+		}
 		stmt.setType()
 		return stmt, nil
 	}
@@ -175,7 +178,7 @@ func ParseLine(input []rune, row int) (Stmt, error) {
 
 func ParseFile(filename string) ([]Stmt, error) {
 	var stmts []Stmt
-  var currentSection string = ""
+	var currentSection string = ".text" // default section
 
 	// ファイルをオープンします。
 	file, err := os.Open(filename)
@@ -195,8 +198,8 @@ func ParseFile(filename string) ([]Stmt, error) {
 		if err != nil {
 			return nil, fmt.Errorf("%s:%d: Error: %s\n", filename, row, err.Error())
 		}
-    changeSection(&currentSection, newStmt)
-    newStmt.section = currentSection
+		changeSection(&currentSection, newStmt)
+		newStmt.section = currentSection
 		stmts = append(stmts, newStmt) // 行を処理します。
 		row++
 	}

@@ -47,7 +47,8 @@ const (
 	// B format
 	BEQ  = "beq"
 	BNE  = "bne"
-	BLT  = "bge"
+	BLT  = "blt"
+	BGE  = "bge"
 	BLTU = "bltu"
 	BGEU = "bgeu"
 
@@ -120,24 +121,24 @@ const (
 )
 
 var OpecodeMap = map[string]OpecodeInfo{
-	ADD:  {RType, []OperandType{REG, REG, REG}},
+	ADD:  {RType, []OperandType{REG, REG, REG | IMM | LAB}},
 	SUB:  {RType, []OperandType{REG, REG, REG}},
-	XOR:  {RType, []OperandType{REG, REG, REG}},
-	OR:   {RType, []OperandType{REG, REG, REG}},
-	AND:  {RType, []OperandType{REG, REG, REG}},
-	SLL:  {RType, []OperandType{REG, REG, REG}},
-	SRL:  {RType, []OperandType{REG, REG, REG}},
-	SRA:  {RType, []OperandType{REG, REG, REG}},
-	SLT:  {RType, []OperandType{REG, REG, REG}},
-	SLTU: {RType, []OperandType{REG, REG, REG}},
+	XOR:  {RType, []OperandType{REG, REG, REG | IMM | LAB}},
+	OR:   {RType, []OperandType{REG, REG, REG | IMM | LAB}},
+	AND:  {RType, []OperandType{REG, REG, REG | IMM | LAB}},
+	SLL:  {RType, []OperandType{REG, REG, REG | IMM}}, // なぜかこの3つの命令はラベルをとれない
+	SRL:  {RType, []OperandType{REG, REG, REG | IMM}},
+	SRA:  {RType, []OperandType{REG, REG, REG | IMM}},
+	SLT:  {RType, []OperandType{REG, REG, REG | IMM | LAB}},
+	SLTU: {RType, []OperandType{REG, REG, REG | IMM | LAB}},
 
 	ADDI:  {IType, []OperandType{REG, REG, IMM | LAB}},
 	WORI:  {IType, []OperandType{REG, REG, IMM | LAB}},
 	ORI:   {IType, []OperandType{REG, REG, IMM | LAB}},
 	ANDI:  {IType, []OperandType{REG, REG, IMM | LAB}},
-	SLLI:  {IType, []OperandType{REG, REG, IMM | LAB}},
-	SRLI:  {IType, []OperandType{REG, REG, IMM | LAB}},
-	SRAI:  {IType, []OperandType{REG, REG, IMM | LAB}},
+	SLLI:  {IType, []OperandType{REG, REG, IMM}}, // なぜかこの3つの命令はラベルをとれない
+	SRLI:  {IType, []OperandType{REG, REG, IMM}},
+	SRAI:  {IType, []OperandType{REG, REG, IMM}},
 	SLTI:  {IType, []OperandType{REG, REG, IMM | LAB}},
 	SLTIU: {IType, []OperandType{REG, REG, IMM | LAB}},
 	LB:    {IType, []OperandType{REG, IMM | LAB, REG}},
@@ -157,6 +158,7 @@ var OpecodeMap = map[string]OpecodeInfo{
 	BEQ:  {BType, []OperandType{REG, REG, IMM | LAB}},
 	BNE:  {BType, []OperandType{REG, REG, IMM | LAB}},
 	BLT:  {BType, []OperandType{REG, REG, IMM | LAB}},
+	BGE:  {BType, []OperandType{REG, REG, IMM | LAB}},
 	BLTU: {BType, []OperandType{REG, REG, IMM | LAB}},
 	BGEU: {BType, []OperandType{REG, REG, IMM | LAB}},
 
@@ -170,14 +172,26 @@ type Operation struct {
 	opcode   string
 	info     OpecodeInfo
 	operands []string
+	relFunc  string
 	src      []rune
 	idx      int
 }
 
 func (o *Operation) Opecode() string        { return o.opcode }
 func (o *Operation) Operands() []string     { return o.operands }
+func (o *Operation) RelFunc() string        { return o.relFunc }
 func (o *Operation) OpcType() OpecodeType   { return o.info.opcTyp }
 func (o *Operation) OprType() []OperandType { return o.info.oprTyps }
+
+// 命令文中にシンボルが出現していればそれを返す関数
+func (o *Operation) RetIfSymbol() string {
+	for i, typ := range o.info.oprTyps {
+		if typ&LAB != 0 && !isRegister(o.operands[i]) && !isImmediate(o.operands[i]) {
+			return o.operands[i]
+		}
+	}
+	return ""
+}
 func (o Operation) printOperation() {
 	for i := 0; i < len(o.Opecode()); i++ {
 		fmt.Printf("opecodeint=%d\n", o.Opecode()[i])
@@ -196,7 +210,7 @@ func (o *Operation) skipUntilNextOperand() {
 			return
 		} else if c != ' ' && c != '\t' && c != ',' && c != '(' && c != ')' {
 			return
-    }
+		}
 	}
 }
 
@@ -205,17 +219,26 @@ func (o *Operation) isEOF() bool {
 }
 
 func (o *Operation) nextOperand() (string, OperandType) {
-  isLiteral := false
-	start     := o.idx
+	isLiteral := false
+	hasRelFunc := false
+	start := o.idx
 	for ; o.idx < len(o.src); o.idx++ {
-    if '"' == o.src[o.idx] && !isLiteral {
-      isLiteral = true
-    } else if '"' == o.src[o.idx] && isLiteral {
-      isLiteral = false
-    } else if isLiteral {
-      continue
-    }
 		c := o.src[o.idx]
+		if c == '"' && !isLiteral {
+			isLiteral = true
+		} else if c == '"' && isLiteral {
+			isLiteral = false
+		} else if isLiteral {
+			continue
+		}
+		if c == '%' {
+			hasRelFunc = true
+		} else if hasRelFunc && c == '(' {
+			hasRelFunc = false
+			break
+		} else if hasRelFunc {
+			continue
+		}
 		if c == ' ' || c == '\t' || c == ',' || c == '(' || c == ')' {
 			//if isDelim(o.src[o.idx]) {
 			break
@@ -223,7 +246,6 @@ func (o *Operation) nextOperand() (string, OperandType) {
 	}
 	// この関数に入った場合かならずtokenがある
 	val := string(o.src[start:o.idx])
-	//fmt.Println("val=", val)
 	typ := analyzeOperandType(val)
 	return val, typ
 }
@@ -265,6 +287,29 @@ func analyzeOperandType(operand string) OperandType {
 	}
 }
 
+// この関数に来る時点でラベルをオペランドにとることは確定している
+func isValidRelFunc(opecode, relFunc string) bool {
+	typ := OpecodeMap[opecode].opcTyp
+
+	switch typ {
+	case RType, IType, SType:
+		if relFunc == "%lo" || relFunc == "%pcrel_lo" {
+			return true
+		}
+		break
+
+	case UType:
+		if relFunc == "%hi" || relFunc == "%pcrel_hi" {
+			return true
+		}
+		break
+
+	default:
+		break
+	}
+	return false
+}
+
 /*
 命令形式ごとにオペランドが正しいか見る
 */
@@ -277,17 +322,26 @@ func (o *Operation) handleByOpType() error {
 		if o.info.oprTyps[oprTypIdx]&typ == 0 {
 			return errors.New("illegal operand.")
 		}
+		// リロケーションファンクションの場合
+		if typ == LAB && val[0] == '%' {
+			if isValidRelFunc(o.Opecode(), val) {
+				o.relFunc = val
+				o.skipUntilNextOperand()
+				continue
+			}
+			return errors.New("illegal operand.")
+		}
 		o.operands = append(o.operands, val)
 		o.skipUntilNextOperand()
 		oprTypIdx++
 	}
 
-  if oprTypIdx != len(o.info.oprTyps) {
+	if oprTypIdx != len(o.info.oprTyps) {
 		return errors.New("illegal operand.")
 	} else if !o.isEOF() {
-	  return errors.New(fmt.Sprintf(ErrMsg, o.src[o.idx]))
+		return errors.New(fmt.Sprintf(ErrMsg, o.src[o.idx]))
 	}
-  return nil
+	return nil
 }
 
 func (s *Stmt) parseOperation(val string) error {

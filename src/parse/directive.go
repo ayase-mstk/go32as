@@ -54,7 +54,7 @@ func (d *Directive) skipUntilNextVal() {
 	}
 }
 func analyzeDirArgType(val string) DirectiveArgType {
-	if isImmediate(val) {
+	if IsImmediate(val) {
 		return INT
 	}
 	return STR

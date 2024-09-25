@@ -121,16 +121,16 @@ const (
 )
 
 var OpecodeMap = map[string]OpecodeInfo{
-	ADD:  {RType, []OperandType{REG, REG, REG | IMM | LAB}},
+	ADD:  {RType, []OperandType{REG, REG, REG}},
 	SUB:  {RType, []OperandType{REG, REG, REG}},
-	XOR:  {RType, []OperandType{REG, REG, REG | IMM | LAB}},
-	OR:   {RType, []OperandType{REG, REG, REG | IMM | LAB}},
-	AND:  {RType, []OperandType{REG, REG, REG | IMM | LAB}},
-	SLL:  {RType, []OperandType{REG, REG, REG | IMM}}, // なぜかこの3つの命令はラベルをとれない
-	SRL:  {RType, []OperandType{REG, REG, REG | IMM}},
-	SRA:  {RType, []OperandType{REG, REG, REG | IMM}},
-	SLT:  {RType, []OperandType{REG, REG, REG | IMM | LAB}},
-	SLTU: {RType, []OperandType{REG, REG, REG | IMM | LAB}},
+	XOR:  {RType, []OperandType{REG, REG, REG}},
+	OR:   {RType, []OperandType{REG, REG, REG}},
+	AND:  {RType, []OperandType{REG, REG, REG}},
+	SLL:  {RType, []OperandType{REG, REG, REG}},
+	SRL:  {RType, []OperandType{REG, REG, REG}},
+	SRA:  {RType, []OperandType{REG, REG, REG}},
+	SLT:  {RType, []OperandType{REG, REG, REG}},
+	SLTU: {RType, []OperandType{REG, REG, REG}},
 
 	ADDI:  {IType, []OperandType{REG, REG, IMM | LAB}},
 	WORI:  {IType, []OperandType{REG, REG, IMM | LAB}},
@@ -186,7 +186,7 @@ func (o *Operation) OprType() []OperandType { return o.info.oprTyps }
 // 命令文中にシンボルが出現していればそれを返す関数
 func (o *Operation) RetIfSymbol() string {
 	for i, typ := range o.info.oprTyps {
-		if typ&LAB != 0 && !isRegister(o.operands[i]) && !isImmediate(o.operands[i]) {
+		if typ&LAB != 0 && !isRegister(o.operands[i]) && !IsImmediate(o.operands[i]) {
 			return o.operands[i]
 		}
 	}
@@ -254,7 +254,7 @@ func isRegister(val string) bool {
 	return RegisterSet[val]
 }
 
-func isImmediate(value string) bool {
+func IsImmediate(value string) bool {
 	// 正の整数リテラル（例: 42）
 	integerPattern := `^\d+$`
 	// 16進数リテラル（例: 0x2A）
@@ -280,7 +280,7 @@ func isImmediate(value string) bool {
 func analyzeOperandType(operand string) OperandType {
 	if isRegister(operand) {
 		return REG
-	} else if isImmediate(operand) {
+	} else if IsImmediate(operand) {
 		return IMM
 	} else {
 		return LAB
@@ -292,7 +292,7 @@ func isValidRelFunc(opecode, relFunc string) bool {
 	typ := OpecodeMap[opecode].opcTyp
 
 	switch typ {
-	case RType, IType, SType:
+	case IType, SType:
 		if relFunc == "%lo" || relFunc == "%pcrel_lo" {
 			return true
 		}

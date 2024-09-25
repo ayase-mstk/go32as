@@ -65,7 +65,7 @@ func resolveRelocType(op parse.Operation) RelocType {
 		}
 		break
 
-	case parse.RType, parse.IType:
+	case parse.IType:
 		if op.RelFunc() == "%lo" {
 			return LO12_I
 		} else if op.RelFunc() == "%pcrel_lo" {

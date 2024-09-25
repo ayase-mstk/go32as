@@ -9,12 +9,13 @@ import (
 
 type Elf32 struct {
 	ehdr     Elf32Ehdr
+	sections Elf32Sections
+	attr     Elf32Attributes
 	symtbl   Symtbl
 	strtbl   Elf32Strtbl
 	shstrtbl Elf32Shstrtbl
-	shdr     Shdr
-	sections Elf32Sections
 	rela     Rela
+	shdr     Shdr
 }
 
 func (e *Elf32) PrintAll() {
@@ -41,6 +42,7 @@ func PrepareElf32Tables(stmts []parse.Stmt) (Elf32, error) {
 	var elf Elf32
 
 	elf.initHeader()
+	elf.initAttributes()
 	// section header を初期化する
 	elf.initSectionHeader()
 	// symbol table のindex0にからシンボルを追加
@@ -88,6 +90,7 @@ func PrepareElf32Tables(stmts []parse.Stmt) (Elf32, error) {
 	elf.resolveOperationSymbol()
 	elf.ResolveSectionRayout() // section header table 作成
 	elf.resolveSymbolShndx()
+	elf.resolveELFHeader()
 	return elf, nil
 }
 
@@ -263,4 +266,9 @@ func (e *Elf32) resolveSymbolShndx() {
 		sym.shndx = e.shdr.resolveShndx(sym.section)
 		e.symtbl.symtbls[i] = sym
 	}
+}
+
+func (e *Elf32) resolveELFHeader() {
+	e.ehdr.EShnum = Elf32Half(len(e.shdr.shdrs))
+	e.ehdr.EShstrndx = Elf32Half(e.shdr.shndx[".shstrtbl"])
 }

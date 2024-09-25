@@ -6,12 +6,6 @@ func calcOffset(off Elf32Off, size Elf32Word) Elf32Off {
 
 func (e *Elf32) ResolveSectionRayout() {
 	var lastOffset Elf32Off = 0x34
-	//for _, shdr := range e.shdr.shdrs {
-	//  // size
-	//  name := e.shstrtbl.data[shdr.ShName]
-	//  // offset
-	//  lastOffset += size
-	//}
 
 	// .text section
 	e.shdr.setSize(".text", Elf32Word(e.sections.entry[".text"].off))
@@ -36,7 +30,6 @@ func (e *Elf32) ResolveSectionRayout() {
 
 	// .riscv.attributes section
 	e.shdr.setOffset(".riscv.attributes", lastOffset)
-	e.shdr.setSize(".riscv.attributes", 0x5f)
 	lastOffset += Elf32Off(e.shdr.getSize(".riscv.attributes"))
 
 	// .symtab section
@@ -66,4 +59,7 @@ func (e *Elf32) ResolveSectionRayout() {
 		e.shdr.setInfo(".symtab", Elf32Word(e.shdr.shndx[".text"]))
 		lastOffset += Elf32Off(e.shdr.getSize(".rela.text"))
 	}
+
+	// ELF header section header table offset
+	e.ehdr.EShoff = lastOffset
 }

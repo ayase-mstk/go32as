@@ -3,7 +3,6 @@ package elf32
 import (
 	"bytes"
 	"encoding/binary"
-	//"fmt"
 	"os"
 	"strconv"
 
@@ -418,14 +417,22 @@ func (e *Elf32) WriteToFile() error {
 	}
 
 	// .strtab
-	err = binary.Write(file, binary.LittleEndian, e.strtbl.data)
+	_, err = file.Write(e.strtbl.data)
 	if err != nil {
 		return err
 	}
 	// .shstrtab
-	err = binary.Write(file, binary.LittleEndian, e.shstrtbl.data)
+	_, err = file.Write(e.shstrtbl.data)
 	if err != nil {
 		return err
+	}
+
+	// .rela.text
+	for _, entry := range e.rela.entry {
+		err = binary.Write(file, binary.LittleEndian, entry)
+		if err != nil {
+			return err
+		}
 	}
 
 	// section header table

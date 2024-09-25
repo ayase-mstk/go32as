@@ -268,7 +268,8 @@ func (e *Elf32) resolveSymbolShndx() {
 	}
 }
 
+// ELFヘッダーの残りの変数を埋める
 func (e *Elf32) resolveELFHeader() {
-	e.ehdr.EShnum = Elf32Half(len(e.shdr.shdrs))
-	e.ehdr.EShstrndx = Elf32Half(e.shdr.shndx[".shstrtbl"])
+	e.ehdr.EShnum = Elf32Half(len(e.shdr.shdrs))            // sectionの数
+	e.ehdr.EShstrndx = Elf32Half(e.shdr.shndx[".shstrtab"]) // section header内での.shstrtabのインデックス
 }

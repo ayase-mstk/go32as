@@ -147,27 +147,13 @@ func (e *Elf32) initSectionHeader() {
 		ShFlags:     0,
 		ShAddr:      0,
 		ShOffset:    0,
-		ShSize:      0x5f,
+		ShSize:      e.attr.CalculateSize(),
 		ShLink:      0,
 		ShInfo:      0,
 		ShAddralign: 1,
 		ShEntsize:   0,
 	}
 	e.shdr.AddSection(riscvSection, ".riscv.attributes")
-
-	//rodataSection := Elf32Shdr{
-	//    ShName:      e.shstrtbl.resolveIndex(".rodata"),
-	//    ShType:      SHTProgbits,
-	//    ShFlags:     SHFAlloc,
-	//    ShAddr:      0,
-	//    ShOffset:    0,
-	//    ShSize:      0,
-	//    ShLink:      0,
-	//    ShInfo:      0,
-	//    ShAddralign: 4,
-	//    ShEntsize:   0,
-	//}
-	//e.shdr.AddSection(rodataSection, ".rodata")
 
 	symSection := Elf32Shdr{
 		ShName:      e.shstrtbl.resolveIndex(".symtab"),

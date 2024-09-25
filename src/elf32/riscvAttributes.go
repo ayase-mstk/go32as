@@ -1,16 +1,20 @@
 package elf32
 
+import (
+	"unsafe"
+)
+
 // uleb128 (Unsigned LEB128) は可変長エンコーディングをサポートするため、カスタムの型や関数で表現します。
 type ULEB128 uint64
 
 // ULEB128 のサイズを計算するためのヘルパー関数
-func uleb128Size(value ULEB128) uint32 {
+func uleb128Size(value ULEB128) Elf32Word {
 	size := 0
 	for value >= 0x80 {
 		size++
 		value >>= 7
 	}
-	return uint32(size + 1) // 最後の1バイトを加算
+	return Elf32Word(size + 1) // 最後の1バイトを加算
 }
 
 // .riscv.attributes section.
@@ -21,7 +25,7 @@ type Elf32Attributes struct {
 
 // VendorSection represents a vendor-specific subsection.
 type VendorSection struct {
-	Length         uint32          // Length of the subsection
+	Length         Elf32Word       // Length of the subsection
 	VendorName     string          // Vendor name (NTBS, null-terminated byte string)
 	SubSubSections []SubSubSection // One or more sub-sub-sections
 }
@@ -29,7 +33,7 @@ type VendorSection struct {
 // SubSubSection represents a sub-sub-section with attributes.
 type SubSubSection struct {
 	Tag        ULEB128     // The tag for the sub-sub-section
-	Length     uint32      // Length of the sub-sub-section
+	Length     Elf32Word   // Length of the sub-sub-section
 	Attributes []Attribute // Tag-value pairs for this section
 }
 
@@ -54,8 +58,8 @@ func NewAttribute(tag ULEB128, value interface{}) Attribute {
 }
 
 // CalculateLength はサブサブセクションの正確な Length を計算します
-func (s *SubSubSection) CalculateLength() uint32 {
-	length := uint32(0)
+func (s *SubSubSection) CalculateLength() Elf32Word {
+	length := Elf32Word(0)
 
 	// タグのサイズ (ULEB128) を計算
 	length += uleb128Size(s.Tag)
@@ -70,7 +74,7 @@ func (s *SubSubSection) CalculateLength() uint32 {
 		case ULEB128:
 			length += uleb128Size(v)
 		case string:
-			length += uint32(len(v)) + 1 // NTBS の長さ + 終端の null バイト
+			length += Elf32Word(len(v)) + 1 // NTBS の長さ + 終端の null バイト
 		}
 	}
 
@@ -86,7 +90,7 @@ func NewVendorSection(name string, attributes []Attribute) VendorSection {
 	}
 	subSection.Length = subSection.CalculateLength()
 	return VendorSection{
-		Length:         uint32(len(attributes)*8 + len(name) + 1),
+		Length:         Elf32Word(len(attributes)*8 + len(name) + 1),
 		VendorName:     name,
 		SubSubSections: []SubSubSection{subSection},
 	}
@@ -111,4 +115,46 @@ func (e *Elf32) initAttributes() {
 		FormatVersion:  'A', // Format version 'A'
 		VendorSections: []VendorSection{riscvVendor},
 	}
+}
+
+// CalculateSize calculates the size of an Attribute in bytes.
+func (attr *Attribute) CalculateSize() Elf32Word {
+	size := Elf32Word(unsafe.Sizeof(attr.Tag)) // タグのサイズ
+	switch v := attr.Value.(type) {
+	case ULEB128:
+		size += uleb128Size(v) // ULEB128 の値サイズ
+	case string:
+		size += Elf32Word(len(v)) + 1 // 文字列の長さ + 終端の null バイト
+	}
+	return size
+}
+
+// CalculateSize calculates the size of a SubSubSection in bytes.
+func (sss *SubSubSection) CalculateSize() Elf32Word {
+	size := Elf32Word(unsafe.Sizeof(sss.Tag))    // サブサブセクションタグのサイズ
+	size += Elf32Word(unsafe.Sizeof(sss.Length)) // Length フィールドのサイズ (4 bytes)
+	for _, attr := range sss.Attributes {
+		size += attr.CalculateSize() // 各属性のサイズ
+	}
+	return size
+}
+
+// CalculateSize calculates the size of a VendorSection in bytes.
+func (vs *VendorSection) CalculateSize() Elf32Word {
+	size := Elf32Word(unsafe.Sizeof(vs.Length)) // Length フィールドのサイズ (4 bytes)
+	size += Elf32Word(len(vs.VendorName)) + 1   // Vendor name のサイズ (NTBS)
+
+	for _, sub := range vs.SubSubSections {
+		size += sub.CalculateSize() // 各サブサブセクションのサイズ
+	}
+	return size
+}
+
+// CalculateSize calculates the total size of the Elf32Attributes section in bytes.
+func (as *Elf32Attributes) CalculateSize() Elf32Word {
+	size := Elf32Word(unsafe.Sizeof(as.FormatVersion)) // フォーマットバージョン (1 byte)
+	for _, vendor := range as.VendorSections {
+		size += vendor.CalculateSize() // 各ベンダーセクションのサイズ
+	}
+	return size
 }

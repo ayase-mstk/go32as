@@ -105,6 +105,9 @@ const (
 	TLS_TPREL32  // 10: TLS thread pointer offset, 32-bit, dynamic
 	TLS_TPREL64  // 11: TLS thread pointer offset, 64-bit, dynamic
 	TLSDESC      // 12: TLS Descriptor, dynamic
+	EMPTY1       // 13: TLS Descriptor, dynamic
+	EMPTY2       // 14: TLS Descriptor, dynamic
+	EMPTY3       // 15: TLS Descriptor, dynamic
 
 	// Static relocations
 	BRANCH       // 16: 12-bit PC-relative branch offset
@@ -135,9 +138,15 @@ const (
 	SUB32       // 39: 32-bit label subtraction
 	SUB64       // 40: 64-bit label subtraction
 	GOT32_PCREL // 41: PC-relative GOT entry reference, 32-bit
+	RESERVED0   // 42: PC-relative GOT entry reference, 32-bit
 	ALIGN       // 43: Alignment statement
 	RVC_BRANCH  // 44: 8-bit PC-relative branch offset
 	RVC_JUMP    // 45: 11-bit PC-relative jump offset
+	RESERVED1   // 46: Reserved
+	RESERVED2   // 47: Reserved
+	RESERVED3   // 48: Reserved
+	RESERVED4   // 49: Reserved
+	RESERVED5   // 50: Reserved
 	RELAX       // 51: Instruction relaxation
 	SUB6        // 52: 6-bit local label subtraction
 	SET6        // 53: 6-bit local label assignment

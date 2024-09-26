@@ -5,6 +5,7 @@ import (
 	"encoding/binary"
 	"os"
 	"strconv"
+	"strings"
 
 	"github.com/ayase-mstk/go32as/src/parse"
 )
@@ -206,6 +207,9 @@ func changeLoadInstruction(opecode string, operands *[]string) {
 func dataEncode(file *os.File, stmts []parse.Stmt) {
 	for _, stmt := range stmts {
 		switch stmt.Dir().Name() {
+		case ".string", ".asciz":
+			data := strings.Trim(stmt.Dir().Args()[0], "\"")
+			file.Write([]byte(data))
 		case ".byte":
 			// overflowはパーサーで処理済みと仮定
 			data, _ := strconv.Atoi(stmt.Dir().Args()[0])
@@ -404,6 +408,7 @@ func (e *Elf32) WriteToFile() error {
 	dataEncode(file, e.sections.entry[".rodata"].stmts)
 
 	// .riscv.attributes section
+	// size = 0x4c 0x13ツールチェーンより少ない
 	err = e.encodeAttributes(file)
 	if err != nil {
 		return err

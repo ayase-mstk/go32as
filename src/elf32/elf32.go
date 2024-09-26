@@ -88,8 +88,8 @@ func PrepareElf32Tables(stmts []parse.Stmt) (Elf32, error) {
 	// 2周目
 	// 外部シンボル解決
 	elf.resolveOperationSymbol()
-	elf.ResolveSectionRayout() // section header table 作成
 	elf.resolveSymbolShndx()
+	elf.ResolveSectionRayout() // section header table 作成
 	elf.resolveELFHeader()
 	return elf, nil
 }
@@ -122,7 +122,7 @@ func (e *Elf32) handleDirective(s parse.Stmt) {
 		}
 		break
 
-	case ".global":
+	case ".globl":
 		if e.symtbl.exist(s.Dir().Args()[0]) {
 			e.symtbl.setInfo(s.Dir().Args()[0], createSymInfo(STB_LOCAL, (e.symtbl.symtbls[e.symtbl.idx[s.Dir().Args()[0]]].info&0x0F)))
 		} else {
@@ -198,7 +198,7 @@ func calcSize(s parse.Stmt) Elf32Addr {
 
 	switch s.Dir().Name() {
 	case ".string", ".asciz": // alias for string
-		off = Elf32Addr(len(s.Dir().Args()[1]) + 1)
+		off = Elf32Addr(len(s.Dir().Args()[0]) - 2) // double quotationの分減らす
 		break
 	case ".byte":
 		off = 1
@@ -236,6 +236,7 @@ func (e *Elf32) resolveOperationSymbol() {
 			// 命令文中にシンボルが使用されていれば、リロケーションエントリを作成する
 			typ := resolveRelocType(*stmt.Op())
 			e.rela.addRelaEntry(off, e.symtbl.idx[symName], typ, 0)
+			e.rela.addRelaEntry(off, 0, RELAX, 0)
 		}
 		off += 4
 	}

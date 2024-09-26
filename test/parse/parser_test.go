@@ -235,8 +235,6 @@ func TestParser9(t *testing.T) {
 	expectSame(t, stmts, tests)
 }
 
-
-
 /*
 ==========================================
 =============  Error Test  ===============
@@ -285,6 +283,16 @@ func TestParserError3(t *testing.T) {
 
 func TestParserError4(t *testing.T) {
 	input := []rune(".text .L0:")
+	_, err := parse.ParseLine(input, 1)
+	if err == nil {
+		t.Fatalf("test - parser didnot fail: expect fail")
+	}
+
+	expectErrorMessage(t, err.Error(), fmt.Sprintf(UnrecognizedError, '.'))
+}
+
+func TestParserError5(t *testing.T) {
+	input := []rune(":")
 	_, err := parse.ParseLine(input, 1)
 	if err == nil {
 		t.Fatalf("test - parser didnot fail: expect fail")

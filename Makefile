@@ -3,11 +3,11 @@ BINARY_NAME	:=	rv32i-as
 MODULE_PATH	:=	github.com/ayase-mstk/go32as
 #SRC         := $(shell find . -name '*.go' ! -path './src/*')
 SRC					:= src/main.go
-TEST_DIR		:=	test
-TEST_NAME		:=	ztail_test.go
+TEST_DIR		:=	./test
+TEST_NAME		:=	$(TEST_DIR)/parse/...
 RM					:=	rm -rf
 
-all: init build
+all: init fmt build
 
 init:
 	@if [ ! -f go.mod ]; then \
@@ -21,10 +21,10 @@ run: all
 	./${BINARY_NAME}
 
 fmt:
-	gofmt -s -w .
+	gofmt -s -w src/. test/.
 
 test: init
-	go test -v $(TEST_DIR)/$(TEST_NAME) --short
+	go test -v $(TEST_NAME) --short
 
 clean:
 	go clean

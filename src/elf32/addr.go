@@ -33,11 +33,11 @@ func (e *Elf32) ResolveSectionRayout() {
 	lastOffset += Elf32Off(e.shdr.getSize(".riscv.attributes"))
 
 	// .symtab section
+	e.shdr.setEntsize(".symtab", 0x10)
 	e.shdr.setOffset(".symtab", lastOffset)
 	e.shdr.setSize(".symtab", Elf32Word(len(e.symtbl.symtbls))*e.shdr.getEntsize(".symtab"))
 	e.shdr.setLink(".symtab", Elf32Word(e.shdr.shndx[".strtab"]))
 	e.shdr.setInfo(".symtab", Elf32Word(e.symtbl.calcLastLocalSymIdx()+1))
-	e.shdr.setEntsize(".symtab", 0x10)
 	lastOffset += Elf32Off(e.shdr.getSize(".symtab"))
 
 	// .strtab section
@@ -56,7 +56,7 @@ func (e *Elf32) ResolveSectionRayout() {
 		e.shdr.setOffset(".rela.text", lastOffset)
 		e.shdr.setSize(".rela.text", Elf32Word(len(e.rela.entry))*e.shdr.getEntsize(".rela.text"))
 		e.shdr.setLink(".rela.text", Elf32Word(e.shdr.shndx[".symtab"]))
-		e.shdr.setInfo(".symtab", Elf32Word(e.shdr.shndx[".text"]))
+		e.shdr.setInfo(".rela.text", Elf32Word(e.shdr.shndx[".text"]))
 		lastOffset += Elf32Off(e.shdr.getSize(".rela.text"))
 	}
 

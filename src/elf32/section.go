@@ -21,7 +21,7 @@ func (s *Elf32Sections) advanceOffset(name string, off Elf32Addr) {
 		s.entry = make(map[string]Section)
 	}
 	section := s.entry[name]
-	section.off = off
+	section.off += off
 	s.entry[name] = section
 }
 
